@@ -101,7 +101,7 @@ public class Partida implements IModelo {
     }
 
     //manejara la logica de los turnos
-    public boolean logicaTurno(Tablero tablero, Mazo mazo) {
+    public boolean puedeJugarJugador_turno(Tablero tablero, Mazo mazo) {
         Jugador jugadorActual= jugadores.get(turnoActual);//tengo a jugadorActual como atrib.local para mas seguridad
         //verificar primero si tiene fichas
         ArrayList<FichaDomino> fichasJugador=jugadorActual.getFichas();
@@ -115,8 +115,7 @@ public class Partida implements IModelo {
             }
         }else {
             //si no tiene fichas> Verificar si tiene 150 puntos (ganadorPartida)> Si no suma 150p, se inicia nueva mano
-            int puntos=jugadorActual.getPuntaje();
-            if(puntos== 150){
+            if (jugadorActual.getPuntaje() >= 150) {
                 hayGanadorPartido();
             }else {
                 recuentoPuntosMano();

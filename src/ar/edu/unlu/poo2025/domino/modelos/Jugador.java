@@ -1,11 +1,13 @@
 package ar.edu.unlu.poo2025.domino.modelos;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class Jugador {
+public class Jugador implements Serializable {
     private String nombre;
     private int puntaje;
     private ArrayList<FichaDomino> fichas;
+    private static final long serialVersionUID = 1L;
 
     // Constructor
     public Jugador(String nombre) {
@@ -61,7 +63,7 @@ public class Jugador {
                 mejor = f;
             }
         }
-        return mejor;
+        return mejor;//devuelve la ficha mas alta
     }
 
     // Verifica el jugador si puede jugar según los extremos del tablero
@@ -72,7 +74,7 @@ public class Jugador {
         Iterator<FichaDomino> it = fichas.iterator();
         while (it.hasNext()) {
             FichaDomino ficha = it.next();
-            if (tablero.agregaFichaTablero(ficha)) {
+            if (tablero.agregaFichaTablero(ficha)) {//si da true es porque es una ficha valida, sino vuelve al loop
                 it.remove();
                 jugo = true;
                 return true;
@@ -81,11 +83,10 @@ public class Jugador {
 
         // Si no pude jugar, intento robar hasta que pueda o se acabe el mazo
         while (!mazo.estaVacio()) {
-            FichaDomino robada = tieneQueRobar(mazo);
+            FichaDomino robada = mazo.robarFicha();//llama a robar ficha del mazo
             fichas.add(robada);
 
-            if (tablero.agregaFichaTablero(robada)) {
-                fichas.remove(robada);
+            if (tablero.agregaFichaTablero(robada)) {//si da true es porque es una ficha valida, sino vuelve al loop
                 jugo = true;
                 return true;
             }
@@ -93,13 +94,7 @@ public class Jugador {
 
         // Si llegué hasta acá, no pude jugar y el mazo está vacío
         return false;
-        //si puedeJugar = false, el juego se bloqueo
-    }
-
-    public FichaDomino tieneQueRobar(Mazo mazo){
-        FichaDomino fichaRobada=null;
-        fichaRobada= mazo.robarFicha();
-        return fichaRobada;
+        //si puedeJugar = false, tengo que pasar turno
     }
 
     // Verifica si el jugador tiene fichas restantes
@@ -107,14 +102,28 @@ public class Jugador {
         return !fichas.isEmpty(); // Verifica si la lista de fichas no está vacía
     }
 
+    public FichaDomino nuevaMano() {
+        if (fichas.isEmpty()) return null;
+        return fichas.removeFirst();
+    }
+
+    public int recuentoPuntosJugador() {//metodo cuando se necesitan sumar los ptos cuando se termina una ronda
+        int suma = 0;
+        for (FichaDomino f : fichas) {
+            suma += f.getExtremoIZQ() + f.getExtremoDER();
+        }
+        return suma;
+    }
+    public void sumarPuntos(int puntos) {
+        this.puntaje += puntos;
+    }
+
     // Getters y setters
     public ArrayList<FichaDomino> getFichas() {
         return this.fichas;
     }
 
-    public String getNombre() {
-        return nombre;
-    }
+
 
     public int getPuntaje() {
         return puntaje;
@@ -131,4 +140,5 @@ public class Jugador {
     public void setFichas(ArrayList<FichaDomino> fichas) {
         this.fichas = fichas;
     }
+
 }

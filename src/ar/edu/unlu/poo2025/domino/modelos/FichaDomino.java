@@ -1,6 +1,9 @@
 package ar.edu.unlu.poo2025.domino.modelos;
 
-public class FichaDomino {
+import java.io.Serializable;
+
+public class FichaDomino implements Serializable {
+    private static final long serialVersionUID = 1L;
     private int extremoIZQ;
     private int extremoDER;
 

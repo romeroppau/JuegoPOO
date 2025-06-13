@@ -1,8 +1,11 @@
 package ar.edu.unlu.poo2025.domino.modelos;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.LinkedList;
 
-public class Tablero {
+public class Tablero implements Serializable {
+    private static final long serialVersionUID = 1L;
     private LinkedList<FichaDomino> fichasJugadas;
     private int extremoActualIzq;
     private int extremoActualDer;
@@ -10,10 +13,19 @@ public class Tablero {
     public Tablero(){
         this.extremoActualIzq=-1;//significa que no tiene ficha
         this.extremoActualDer=-1;
+        this.fichasJugadas = new LinkedList<>();
     }
 
     public boolean agregaFichaTablero(FichaDomino ficha){
         boolean esvalida=fichaValida(ficha);
+        // Si el tablero está vacío, simplemente agrego la ficha y seteo ambos extremos
+        if (extremoActualIzq == -1 && extremoActualDer == -1) {
+            fichasJugadas.add(ficha);
+            extremoActualIzq = ficha.getExtremoIZQ();
+            extremoActualDer = ficha.getExtremoDER();
+            return true;
+        }
+
         if(!esvalida){
             return false;
         }
@@ -22,44 +34,55 @@ public class Tablero {
         //verifico en que extremo agregarla
         if(ficha.getExtremoDER()==extremoActualIzq){
             //no necesita rotar
-            extremoActualIzq= ficha.getExtremoDER();
             fichasJugadas.addFirst(ficha);
+            extremoActualIzq= ficha.getExtremoDER();
+            return true;
         } else if (ficha.getExtremoDER()==extremoActualDer) {
             //necesita rotar
             ficha.rotarFicha();
-            extremoActualDer=ficha.getExtremoIZQ();
             fichasJugadas.addLast(ficha);
+            extremoActualDer=ficha.getExtremoIZQ();
+            return true;
         }else if (ficha.getExtremoIZQ() == extremoActualIzq) {
             ficha.rotarFicha(); // ahora el nuevo extremoIzq es el correcto
             fichasJugadas.addFirst(ficha);
             extremoActualIzq = ficha.getExtremoDER();
+            return true;
         } else if (ficha.getExtremoIZQ() == extremoActualDer) {
             // No necesita rotar, va al final
             fichasJugadas.addLast(ficha);
             extremoActualDer = ficha.getExtremoIZQ();
+            return true;
         }
-        return true;
+        return false;
     }
 
     //valida que coincida con alguno de los extremos actuales
     public boolean fichaValida(FichaDomino ficha){
-        boolean rta;
-        if(ficha.getExtremoIZQ()== extremoActualIzq || ficha.getExtremoIZQ()== extremoActualDer){
-            rta=true;
-        } else if (ficha.getExtremoDER()== extremoActualIzq || ficha.getExtremoDER()== extremoActualDer) {
-            rta=true;
+        // Si el tablero está vacío, cualquier ficha es válida
+        if (extremoActualIzq == -1 && extremoActualDer == -1) {
+            return true;
         }
-        else{
-            rta=false;
-        }
-        return rta;
+        return ficha.getExtremoIZQ() == extremoActualIzq ||
+                ficha.getExtremoIZQ() == extremoActualDer ||
+                ficha.getExtremoDER() == extremoActualIzq ||
+                ficha.getExtremoDER() == extremoActualDer;
     }
 
     public void actualizarExtremos(int nuevoExtIzq, int nuevoExtDer){
         setExtremoActualIzq(nuevoExtIzq);
         setExtremoActualDer(nuevoExtDer);
     }
+    public void limpiezaTablero() {
+        fichasJugadas.clear();
+        extremoActualIzq = -1;
+        extremoActualDer = -1;
+    }
+
     //Getters
+    public LinkedList<FichaDomino> getFichasJugadas() {
+        return fichasJugadas;
+    }
     public int getExtremoActualIzq() {
         return extremoActualIzq;
     }

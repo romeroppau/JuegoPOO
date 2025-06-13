@@ -1,17 +1,16 @@
 package ar.edu.unlu.poo2025.domino.modelos;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.FileHandler;
 
-public class Mazo {
+public class Mazo implements Serializable {
     private ArrayList<FichaDomino> fichasARepartir;//funcionara como pozo despues
+    private static final long serialVersionUID = 1L;
 
     public void inicializarFichas() {
         fichasARepartir = new ArrayList<>();
-        for (int i = 0; i <= 6; i++) {
+        for (int i = 1; i <= 6; i++) {
             for (int j = i; j <= 6; j++) {
                 fichasARepartir.add(new FichaDomino(i, j));
             }
@@ -33,8 +32,7 @@ public class Mazo {
     //solamente devuelve una ficha, no es su responsabilidad asignarla al jugador
     //tampoco verifica si esta vacia
     public FichaDomino robarFicha() {
-        ArrayList<FichaDomino> fichasDisponibles= getFichasARepartir();
-        return fichasDisponibles.removeFirst();
+        return fichasARepartir.removeFirst();
     }
 
     public boolean estaVacio() {

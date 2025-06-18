@@ -7,7 +7,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 
 public interface IPartida  extends IObservableRemoto {
-    //metodos que el controlador necesia para actualizarse
+    //metodos que el controlador necesita para actualizarse
     //Métodos que gestionan la lógica de la interacción, como la asignación de fichas, el avance de turno, y el control de jugadas.
     //logica entre jugadores-vista / eventos y acciones del jugador
 
@@ -17,7 +17,7 @@ public interface IPartida  extends IObservableRemoto {
     public Jugador hayGanadorPartido(Jugador ganadorPartido) throws RemoteException;
     public int recuentoPuntosMano(Jugador ganadorMano) throws RemoteException;
     public Jugador[] getJugadores() throws RemoteException;
-    // Este método es nuevo y específico para la desconexión remota segura
+    // Este metodo es nuevo y específico para la desconexión remota segura
     void cerrar(IObservadorRemoto controlador, Jugador jugador) throws RemoteException;
 
     //persistencia ACOMODAR

@@ -49,14 +49,40 @@ public class Controlador implements IControladorRemoto {
     }
 
     @Override
-    public void actualizar(IObservableRemoto iObservableRemoto, Object arg1) throws RemoteException {
-        if (arg1 instanceof Eventos) {
-            switch ((Eventos) arg1) {
+    public void actualizar(IObservableRemoto iObservableRemoto, Object evento) throws RemoteException {
+        if (evento instanceof Eventos) {
+            switch ((Eventos) evento) {
+                //vistainiciacion:Mostrar jugadores conectados, permitir ingresar nombre e iniciar partida
+                //vistajuego: Mostrar tablero, fichas del jugador, turnos, jugadas
+                //vistaFinPartida: Mostrar quién ganó, puntos finales, opción de reiniciar o salir
+
                 case JUGADOR_AGREGADO:
-                    this.vista.mostrarListaJugadores((Jugador[]) this.modelo.getJugadores());
+                    //bloque de código se ejecuta cuando el modelo notifica que se ha agregado un jugador
+                    this.vista.vistaIniciacion((Jugador[]) this.modelo.getJugadores());
+                    //se llama a la vista para que actualice graficamente lo que corresponde
+                    //y le paso por parametro: La lista de jugadores actuales,
+                    //casteando a arreglo de tipo Jugador[] para transformar en array para la vista
                     break;
                 case PARTIDA_INICIADA:
-                    this.vista.mostrarChat((IMensaje[]) this.modelo.getMensajes());
+                    this.vista.vistaIniciacion( this.modelo.iniciarPartida());
+                    break;
+                case AGREGA_FICHA_TABLERO:
+                    this.vista.vistaJuego( this.modelo.iniciarPartida());
+                    break;
+                case JUGADOR_JUGO_FICHA:
+                    this.vista.vistaJuego((boolean) this.modelo.iniciarPartida());
+                    break;
+                case CAMBIO_TURNO:
+                    this.vista.vistaJuego( this.modelo.iniciarPartida());
+                    break;
+                case MANO_TERMINADA:
+                    this.vista.vistaJuego( this.modelo.iniciarPartida());
+                    break;
+                case JUEGO_BLOQUEADO:
+                    this.vista.vistaJuego( this.modelo.iniciarPartida());
+                    break;
+                case PARTIDA_TERMINADA:
+                    this.vista.vistaFinPartida( this.modelo.iniciarPartida());
                     break;
                 default:
                     break;

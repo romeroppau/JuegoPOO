@@ -7,6 +7,7 @@ public enum Eventos implements Serializable{
     JUGADOR_AGREGADO,
     PARTIDA_INICIADA,//el reparto de fichas esta aca
     AGREGA_FICHA_TABLERO,
+    //duda: este evento solo representa la primer ficha que se agrega
     JUGADOR_JUGO_FICHA,
     CAMBIO_TURNO,
     MANO_TERMINADA,

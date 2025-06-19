@@ -2,8 +2,7 @@ package ar.edu.unlu.poo2025.domino.cliente;
 
 import ar.edu.unlu.poo2025.domino.controladores.Controlador;
 import ar.edu.unlu.poo2025.domino.vistas.IVista;
-import ar.edu.unlu.poo2025.domino.vistas.grafica.VistaGrafica;
-import ar.edu.unlu.rmimvc.RMIMVCException;
+import ar.edu.unlu.poo2025.domino.vistas.VistaConsola;
 import ar.edu.unlu.rmimvc.cliente.Cliente;
 
 import java.rmi.RemoteException;
@@ -13,26 +12,28 @@ public class AppCliente {
         //Pedir la IP y el puerto del servidor al que se quiere conectar.
         //Instanciar la Vista y el Controlador.
         //Usar la clase Cliente de nuestra librería para conectar el Controlador con el Modelo remoto.
-
-        String ip_servidor = "127.0.0.1";
-        String puerto_servidor= "8888";
-
-        String ip_cliente = "127.0.0.1";
-        int puerto_cliente= 9001;
-        //para abrir dos ventanas, tengo que ejecutar uno con un puerto y luego ejecutarlo una ve que cambio el puerto
+        String ip = "127.0.0.1";
+        String ipServidor = "127.0.0.1";
+        String portServidor = "8888";
+        String port = "9999";
 
 
-        Controlador c= new Controlador();
-        IVista vista = new VistaGrafica(c);
+        IVista vista = new VistaConsola();
+        Controlador controlador = new Controlador();
+        controlador.setVista(vista);
+        vista.setControlador(controlador);
 
-        // La IP y puerto del cliente son para que el servidor pueda devolverle llamadas (callbacks)
-        Cliente cli= new Cliente(ip_cliente, puerto_cliente, ip_servidor,Integer.parseInt(puerto_servidor));
-        vista.iniciar();
+
+        Cliente c = new Cliente(ip, Integer.parseInt(port), ipServidor, Integer.parseInt(portServidor));
+
         try {
-            cli.iniciar(c);
-        } catch (RMIMVCException e) {
-            e.printStackTrace();
+            c.iniciar(controlador); // primero conecta con el servidor
+            System.out.println("Cliente corriendo con éxito en " + "(" + ip + ":" + port + ")");
+
+            vista.iniciar();        // después arrancás la vista (ya con controlador funcional)
         } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

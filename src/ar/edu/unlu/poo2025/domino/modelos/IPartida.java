@@ -3,10 +3,11 @@ package ar.edu.unlu.poo2025.domino.modelos;
 import ar.edu.unlu.rmimvc.observer.IObservableRemoto;
 import ar.edu.unlu.rmimvc.observer.IObservadorRemoto;
 
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 
-public interface IPartida  extends IObservableRemoto {
+public interface IPartida  extends IObservableRemoto, Remote {
     //metodos que el controlador necesita para actualizarse
     //Métodos que gestionan la lógica de la interacción, como la asignación de fichas, el avance de turno, y el control de jugadas.
     //logica entre jugadores-vista / eventos y acciones del jugador
@@ -17,11 +18,22 @@ public interface IPartida  extends IObservableRemoto {
     public Jugador hayGanadorPartido(Jugador ganadorPartido) throws RemoteException;
     public int recuentoPuntosMano(Jugador ganadorMano) throws RemoteException;
     public Jugador[] getJugadores() throws RemoteException;
+    public Tablero getTablero() throws RemoteException;
+    public Jugador getJugadorActual() throws RemoteException;
+    public Jugador getGanadorPartido() throws RemoteException;
+    public Mazo getMazo() throws RemoteException;
+    public boolean ejecutarTurno(Tablero tablero, Mazo mazo) throws RemoteException;
+    public int getPuntajeMax()throws RemoteException;
+    public int getCantJugadoresActuales() throws RemoteException;
+    public void setPuntajeMax(int puntajeMax) throws RemoteException;
+    public void setMaxjugadores(int maxjugadores)throws RemoteException;
+    public ManejadorTurnos getManejadorTurnos() throws RemoteException;
+
     // Este metodo es nuevo y específico para la desconexión remota segura
     void cerrar(IObservadorRemoto controlador, Jugador jugador) throws RemoteException;
 
     //persistencia ACOMODAR
-    boolean guardarMensajes() throws RemoteException;
-    boolean cargarMensajes() throws RemoteException;
+    //boolean guardarMensajes() throws RemoteException;
+    //boolean cargarMensajes() throws RemoteException;
 
 }

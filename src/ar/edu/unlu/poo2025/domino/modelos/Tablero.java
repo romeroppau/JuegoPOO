@@ -35,23 +35,23 @@ public class Tablero implements Serializable {
         if(ficha.getExtremoDER()==extremoActualIzq){
             //no necesita rotar
             fichasJugadas.addFirst(ficha);
-            extremoActualIzq= ficha.getExtremoDER();
+            extremoActualIzq= ficha.getExtremoIZQ();
             return true;
         } else if (ficha.getExtremoDER()==extremoActualDer) {
             //necesita rotar
             ficha.rotarFicha();
             fichasJugadas.addLast(ficha);
-            extremoActualDer=ficha.getExtremoIZQ();
+            extremoActualDer=ficha.getExtremoDER();
             return true;
         }else if (ficha.getExtremoIZQ() == extremoActualIzq) {
             ficha.rotarFicha(); // ahora el nuevo extremoIzq es el correcto
             fichasJugadas.addFirst(ficha);
-            extremoActualIzq = ficha.getExtremoDER();
+            extremoActualIzq = ficha.getExtremoIZQ();
             return true;
         } else if (ficha.getExtremoIZQ() == extremoActualDer) {
             // No necesita rotar, va al final
             fichasJugadas.addLast(ficha);
-            extremoActualDer = ficha.getExtremoIZQ();
+            extremoActualDer = ficha.getExtremoDER();
             return true;
         }
         return false;
@@ -77,6 +77,17 @@ public class Tablero implements Serializable {
         fichasJugadas.clear();
         extremoActualIzq = -1;
         extremoActualDer = -1;
+    }
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Fichas en el tablero:\n");
+
+        for (FichaDomino ficha : fichasJugadas) {
+            sb.append(ficha.toString()).append(" ");
+        }
+
+        return sb.toString();
     }
 
     //Getters

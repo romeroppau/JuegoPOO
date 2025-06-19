@@ -6,11 +6,12 @@ public enum Eventos implements Serializable{
     //el controlador deben conocer para actualizarse
     JUGADOR_AGREGADO,
     PARTIDA_INICIADA,//el reparto de fichas esta aca
-    AGREGA_FICHA_TABLERO,
+    JUGADA_INICIAL,
     //duda: este evento solo representa la primer ficha que se agrega
     JUGADOR_JUGO_FICHA,
     CAMBIO_TURNO,
     MANO_TERMINADA,
     PARTIDA_TERMINADA,
     JUEGO_BLOQUEADO;
+
 }

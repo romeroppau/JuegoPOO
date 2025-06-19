@@ -123,7 +123,9 @@ public class Jugador implements Serializable {
         return this.fichas;
     }
 
-
+    public String getNombre() {
+        return nombre;
+    }
 
     public int getPuntaje() {
         return puntaje;

@@ -2,7 +2,7 @@ package ar.edu.unlu.poo2025.domino.modelos;
 
 import ar.edu.unlu.rmimvc.observer.IObservadorRemoto;
 import ar.edu.unlu.rmimvc.observer.ObservableRemoto;
-import java.io.*;
+
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -21,6 +21,7 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
     private int puntajeMax;
     private ArrayList<Jugador> jugadores;
     private ArrayList<FichaDomino> fichasJugadores;
+    private ManejadorTurnos manejadorTurnos;
 
 
     public Partida(Jugador jugadorActual, Tablero tablero, Mazo mazo, int puntajeMax, ArrayList<Jugador> jugadores) throws RemoteException{
@@ -75,7 +76,7 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
         // colocar ficha en el tablero
         if (mejorFicha != null) {
             tablero.agregaFichaTablero(mejorFicha);
-            this.notificarObservadores(Eventos.AGREGA_FICHA_TABLERO);
+            this.notificarObservadores(Eventos.JUGADA_INICIAL);
             jugadorInicial.getFichas().remove(mejorFicha);
         }
 
@@ -101,87 +102,102 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
     }
 
     //devuelve solo el estado inicial de la partida
-    //raro que devuelva un bool, todavia no valido en que caso es false
     @Override
     public boolean iniciarPartida() throws RemoteException{
-        tablero= new Tablero();
+        if (this.tablero == null) {
+            this.tablero = new Tablero();
+        }
+
         mazo.inicializarFichas();
         mazo.repartirFichas(jugadores);
-        Jugador jugadorqueArranca = jugadorYjugadaInicial();//ya asigna la primer ficha al tablero
-        turnoActual =jugadores.indexOf(jugadorqueArranca);
-        //turnoActual= posicion del array en el que esta 'jugadorqueArranca'
 
+        this.manejadorTurnos = new ManejadorTurnos(jugadores);
+
+        Jugador jugadorqueArranca = jugadorYjugadaInicial();//ya asigna la primer ficha al tablero
+        this.manejadorTurnos.setTurnoActual(jugadores.indexOf(jugadorqueArranca)); // seteo del que arranca
+        this.jugadorActual = jugadorqueArranca; // redundancia
+
+        jugadorActual=jugadorqueArranca;
         this.notificarObservadores(Eventos.PARTIDA_INICIADA);
         return true;
     }
 
     public void avanzarTurno() throws RemoteException{
-        turnoActual = (turnoActual + 1) % jugadores.size(); //% hace que se comporte como una cola circular
+        manejadorTurnos.siguienteTurno();
+        jugadorActual = jugadores.get(manejadorTurnos.getTurnoActual());
         this.notificarObservadores(Eventos.CAMBIO_TURNO);
     }
 
     //manejara la logica de los turnos
     public boolean ejecutarTurno(Tablero tablero, Mazo mazo) throws RemoteException{
-        Jugador jugadorActual= jugadores.get(turnoActual);//tengo a jugadorActual como atrib.local para mas seguridad
+        Jugador jugadorActual = jugadores.get(manejadorTurnos.getTurnoActual());
 
-        if(jugadorActual.tieneFichas()){
-            boolean pudojugar=jugadorActual.puedeJugar(tablero,mazo);
-            if(pudojugar){
+        if (jugadorActual.tieneFichas()) {
+            boolean pudoJugar = jugadorActual.puedeJugar(tablero, mazo);
+
+            if (pudoJugar) {
                 this.notificarObservadores(Eventos.JUGADOR_JUGO_FICHA);
-                jugadoresQueNoPuedieronJugar=0;//reinicio
-                if (!jugadorActual.tieneFichas()) {//el jugador jugo y se quedo sin fichas(ganador mano)
-                    terminoRonda(jugadorActual); // este jugador ganó la ronda
-                    return true;
-                } else {
-                    avanzarTurno();
+                jugadoresQueNoPuedieronJugar = 0;
+
+                if (!jugadorActual.tieneFichas()) {
+                    // Ganó la mano
+                    terminoRonda(jugadorActual);
                     return true;
                 }
-            }else{
+
+            } else {
                 jugadoresQueNoPuedieronJugar++;
-                avanzarTurno();
             }
-        }else {
-            avanzarTurno();
-            return false;
+        } else {
+            jugadoresQueNoPuedieronJugar++;
         }
-        // Verificación de cierre por bloqueo
-        if (jugadoresQueNoPuedieronJugar == jugadores.size() && mazo.estaVacio()) {
+
+        // Verificar si el juego está bloqueado
+        if (jugadoresQueNoPuedieronJugar == getCantJugadoresActuales() && mazo.estaVacio()) {
             bloqueoJuego();
             return false;
         }
-        return false;
+
+        avanzarTurno(); // Avanzar siempre que no se haya terminado la mano
+        return true;
     }
 
     private void terminoRonda(Jugador ganadorMano) throws RemoteException{
-        int puntosGanados = recuentoPuntosMano(ganadorMano); // ← cuenta los puntos de los demás jugadores
-        ganadorMano.sumarPuntos(puntosGanados);             // ← los suma al jugador ganador
+        int puntosGanados = recuentoPuntosMano(ganadorMano);
+        ganadorMano.sumarPuntos(puntosGanados);
         this.notificarObservadores(Eventos.MANO_TERMINADA);
 
         if (ganadorMano.getPuntaje() >= puntajeMax) {
-            hayGanadorPartido(ganadorMano); // ← termina el juego
+            hayGanadorPartido(ganadorMano);
         } else {
-            nuevaMano();         // ← empieza una nueva mano
+            nuevaMano(); // Reinicia la mano, incluyendo el manejador de turnos
         }
     }
 
     private void nuevaMano() throws RemoteException{
-        // Reinicio del tablero y el mazo
+        // Reinicio del tablero y del mazo
         tablero.limpiezaTablero();
         mazo.inicializarFichas();
 
-        // Limpiar y repartir nuevas fichas
+        // Limpieza de fichas anteriores y nueva repartición
         for (Jugador j : jugadores) {
-            j.getFichas().clear(); // limpieza explícita
+            j.getFichas().clear();
         }
         mazo.repartirFichas(jugadores);
 
-        // El jugador que estaba en turno actual arranca
-        Jugador jugadornuevamano = jugadores.get(turnoActual);
+        jugadoresQueNoPuedieronJugar = 0;
 
-        // Que juegue cualquier ficha de su mano (por ejemplo la primera)
-        FichaDomino fichaInicio = jugadornuevamano.nuevaMano();
-        tablero.agregaFichaTablero(fichaInicio);
-        jugadornuevamano.getFichas().remove(fichaInicio);
+        // Usamos la lógica existente para determinar el jugador inicial
+        Jugador jugadorInicial = jugadorYjugadaInicial(); // ← también coloca la ficha inicial y notifica
+
+        // Establecemos en el manejador de turnos quién comienza
+        if (jugadorInicial != null) {
+            int pos = jugadores.indexOf(jugadorInicial);
+            manejadorTurnos.setTurnoActual(pos);
+        } else {
+            // fallback defensivo, aunque no debería pasar nunca
+            manejadorTurnos.setTurnoActual(0);
+        }
     }
 
     //antes de avanzar, deben sumarse los puntos de cada jugador
@@ -266,8 +282,14 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
         removerObservador(controlador);
         // Luego, desconectamos al usuario
         this.hayGanadorPartido(jugador);
+        this.notificarObservadores(Eventos.PARTIDA_TERMINADA);
+    }
+    @Override
+    public ManejadorTurnos getManejadorTurnos() throws RemoteException {
+        return manejadorTurnos;
     }
 
+    /*
     //persistencia ACOMODAR
     @Override
     public boolean guardarMensajes() throws RemoteException {
@@ -298,53 +320,55 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
             e.printStackTrace();
         }
         return false;
-    }
-
+    */
 
     // Getters
-    public Jugador getJugadorActual() {
-        return jugadores.get(turnoActual);
+    public Jugador getJugadorActual() throws RemoteException{
+        return jugadores.get(manejadorTurnos.getTurnoActual());
     }
 
-    public Jugador getGanadorPartido() {
+    public Jugador getGanadorPartido() throws RemoteException{
         return ganadorPartido;
     }
-    public boolean getpartidaTerminada(){
+    public boolean getpartidaTerminada()throws RemoteException{
         return partidaTerminada;
     }
-    public int getCantJugadoresActuales() {
+    public int getCantJugadoresActuales() throws RemoteException{
         return cantJugadoresActuales;
     }
-    public Tablero getTablero() {
+    public Tablero getTablero() throws RemoteException{
         return tablero;
     }
-    public Mazo getMazo() {
+    public Mazo getMazo() throws RemoteException{
         return mazo;
     }
-    public int getTurnoActual() {
+    public int getTurnoActual() throws RemoteException{
         return turnoActual;
     }
-    public int getPuntajeMax() {
+    public int getPuntajeMax() throws RemoteException{
         return puntajeMax;
     }
 
     // Setters
-    public void setJugadorActual(Jugador jugadorActual) {
+    public void setJugadorActual(Jugador jugadorActual) throws RemoteException{
         this.jugadorActual = jugadorActual;
     }
-    public void setCantJugadoresActuales(int cantJugadoresActuales) {
+    public void setCantJugadoresActuales(int cantJugadoresActuales) throws RemoteException{
         this.cantJugadoresActuales = cantJugadoresActuales;
     }
-    public void setTablero(Tablero tablero) {
+    public void setTablero(Tablero tablero) throws RemoteException{
         this.tablero = tablero;
     }
-    public void setMazo(Mazo mazo) {
+    public void setMazo(Mazo mazo) throws RemoteException{
         this.mazo = mazo;
     }
-    public void setTurnoActual(int turnoActual) {
+    public void setTurnoActual(int turnoActual) throws RemoteException{
         this.turnoActual = turnoActual;
     }
-    public void setPuntajeMax(int puntajeMax) {
+    public void setPuntajeMax(int puntajeMax) throws RemoteException{
         this.puntajeMax = puntajeMax;
+    }
+    public void setMaxjugadores(int maxjugadores)throws RemoteException{
+        this.maxjugadores=maxjugadores;
     }
 }

@@ -6,6 +6,7 @@ import ar.edu.unlu.rmimvc.observer.IObservadorRemoto;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Map;
 
 public interface IPartida  extends IObservableRemoto, Remote {
     //metodos que el controlador necesita para actualizarse
@@ -16,6 +17,8 @@ public interface IPartida  extends IObservableRemoto, Remote {
     boolean agregarJugador(String nombre) throws RemoteException;
     public boolean iniciarPartida() throws RemoteException;
     public Jugador hayGanadorPartido(Jugador ganadorPartido) throws RemoteException;
+    public void nuevaMano() throws RemoteException;
+    public Map<String, Integer> obtenerPuntajesJugadores() throws RemoteException;
     public int recuentoPuntosMano(Jugador ganadorMano) throws RemoteException;
     public Jugador[] getJugadores() throws RemoteException;
     public Tablero getTablero() throws RemoteException;

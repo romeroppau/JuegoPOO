@@ -21,40 +21,45 @@ public class Tablero implements Serializable {
         // Si el tablero está vacío, simplemente agrego la ficha y seteo ambos extremos
         if (extremoActualIzq == -1 && extremoActualDer == -1) {
             fichasJugadas.add(ficha);
-            extremoActualIzq = ficha.getExtremoIZQ();
-            extremoActualDer = ficha.getExtremoDER();
+            actualizarExtremos(ficha.getExtremoIZQ(), ficha.getExtremoDER());
             return true;
+        }
+        if (!fichaValida(ficha)) return false;
+        if(esvalida) {
+            //si ficha va a la izquierda-> se agrega al principio de la lista
+            //si ficha va a la derecha-> se agrega al final de la lista
+            //verifico en que extremo agregarla
+            if (ficha.getExtremoDER() == extremoActualIzq) {
+                //no necesita rotar
+                fichasJugadas.addFirst(ficha);
+                actualizarExtremos(ficha.getExtremoIZQ(), extremoActualDer);
+                //actualizo una si y otra no porque solo se actualiza uno de los extremos
+                return true;
+            } else if (ficha.getExtremoDER() == extremoActualDer) {
+                //necesita rotar
+                ficha.rotarFicha();
+                fichasJugadas.addLast(ficha);
+                actualizarExtremos(extremoActualIzq, ficha.getExtremoDER());
+                return true;
+            } else if (ficha.getExtremoIZQ() == extremoActualIzq) {
+                ficha.rotarFicha(); // ahora el nuevo extremoIzq es el correcto
+                fichasJugadas.addFirst(ficha);
+                actualizarExtremos(ficha.getExtremoIZQ(), extremoActualDer);
+                return true;
+            } else if (ficha.getExtremoIZQ() == extremoActualDer) {
+                // No necesita rotar, va al final
+                fichasJugadas.addLast(ficha);
+                actualizarExtremos(extremoActualIzq, ficha.getExtremoDER());
+                return true;
+            }
         }
 
-        if(!esvalida){
-            return false;
-        }
-        //si ficha va a la izquierda-> se agrega al principio de la lista
-        //si ficha va a la derecha-> se agrega al final de la lista
-        //verifico en que extremo agregarla
-        if(ficha.getExtremoDER()==extremoActualIzq){
-            //no necesita rotar
-            fichasJugadas.addFirst(ficha);
-            extremoActualIzq= ficha.getExtremoIZQ();
-            return true;
-        } else if (ficha.getExtremoDER()==extremoActualDer) {
-            //necesita rotar
-            ficha.rotarFicha();
-            fichasJugadas.addLast(ficha);
-            extremoActualDer=ficha.getExtremoDER();
-            return true;
-        }else if (ficha.getExtremoIZQ() == extremoActualIzq) {
-            ficha.rotarFicha(); // ahora el nuevo extremoIzq es el correcto
-            fichasJugadas.addFirst(ficha);
-            extremoActualIzq = ficha.getExtremoIZQ();
-            return true;
-        } else if (ficha.getExtremoIZQ() == extremoActualDer) {
-            // No necesita rotar, va al final
-            fichasJugadas.addLast(ficha);
-            extremoActualDer = ficha.getExtremoDER();
-            return true;
-        }
-        return false;
+        return false; //no es valida la ficha
+    }
+
+    public void actualizarExtremos(int nuevoExtIzq, int nuevoExtDer){
+        setExtremoActualIzq(nuevoExtIzq);
+        setExtremoActualDer(nuevoExtDer);
     }
 
     //valida que coincida con alguno de los extremos actuales
@@ -69,10 +74,7 @@ public class Tablero implements Serializable {
                 ficha.getExtremoDER() == extremoActualDer;
     }
 
-    public void actualizarExtremos(int nuevoExtIzq, int nuevoExtDer){
-        setExtremoActualIzq(nuevoExtIzq);
-        setExtremoActualDer(nuevoExtDer);
-    }
+
     public void limpiezaTablero() {
         fichasJugadas.clear();
         extremoActualIzq = -1;

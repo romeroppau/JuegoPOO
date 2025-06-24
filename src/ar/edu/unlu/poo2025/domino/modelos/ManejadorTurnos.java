@@ -1,7 +1,5 @@
 package ar.edu.unlu.poo2025.domino.modelos;
 
-import ar.edu.unlu.poo2025.domino.modelos.Jugador;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -9,7 +7,7 @@ public class ManejadorTurnos implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private ArrayList<Jugador> jugadores;
-    private int turnoActual;
+    private int turnoActual;//guarda el indice del jugador que tiene el turno
 
     public ManejadorTurnos(ArrayList<Jugador> jugadores) {
         this.jugadores = jugadores;
@@ -17,15 +15,13 @@ public class ManejadorTurnos implements Serializable {
     }
 
     public void siguienteTurno() {
-        cambiarTurno();
-    }
-
-    private void cambiarTurno() {
-        turnoActual = (turnoActual + 1) % jugadores.size(); // Cola circular
+        if (jugadores != null && !jugadores.isEmpty()) {
+            turnoActual = (turnoActual + 1) % jugadores.size();
+        } // Cola circular
     }
 
     public int getTurnoActual() {
-        return turnoActual;
+        return turnoActual;//devuelve el indice
     }
 
     public void setTurnoActual(int turnoActual) {

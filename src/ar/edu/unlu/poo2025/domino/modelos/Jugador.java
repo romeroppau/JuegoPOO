@@ -66,35 +66,52 @@ public class Jugador implements Serializable {
         return mejor;//devuelve la ficha mas alta
     }
 
-    // Verifica el jugador si puede jugar según los extremos del tablero
-    public boolean puedeJugar(Tablero tablero,Mazo mazo) {
-        boolean jugo = false;
+    // Verifica si puede jugar sin modificar el tablero
+    public boolean tieneJugadaValida(Tablero tablero) {
+        for (FichaDomino ficha : fichas) {
+            if (tablero.fichaValida(ficha)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-        // Primero intento jugar con las fichas que ya tengo
+    // Intenta jugar si puede ( sin robar)
+    public boolean jugarFicha(Tablero tablero) {
         Iterator<FichaDomino> it = fichas.iterator();
         while (it.hasNext()) {
             FichaDomino ficha = it.next();
-            if (tablero.agregaFichaTablero(ficha)) {//si da true es porque es una ficha valida, sino vuelve al loop
+            if (tablero.agregaFichaTablero(ficha)) {
                 it.remove();
-                jugo = true;
                 return true;
             }
         }
+        return false; // no pudo jugar
+    }
 
-        // Si no pude jugar, intento robar hasta que pueda o se acabe el mazo
+    // Si no puede jugar, roba hasta que pueda (o se quede sin fichas)
+    public boolean intentarRobarYJugar(Tablero tablero, Mazo mazo) {
         while (!mazo.estaVacio()) {
-            FichaDomino robada = mazo.robarFicha();//llama a robar ficha del mazo
-            fichas.add(robada);
-
-            if (tablero.agregaFichaTablero(robada)) {//si da true es porque es una ficha valida, sino vuelve al loop
-                jugo = true;
+            FichaDomino robada = mazo.robarFicha();//saca la primera de la lista
+            if (tablero.agregaFichaTablero(robada)) {
+                // No se agrega a la mano porque se jugó directamente
                 return true;
+            } else {
+                fichas.add(robada); // No se pudo jugar, se guarda
             }
         }
-
-        // Si llegué hasta acá, no pude jugar y el mazo está vacío
         return false;
-        //si puedeJugar = false, tengo que pasar turno
+    }
+
+    // Este metodo es el que se llama desde el controlador
+    public boolean realizarTurno(Tablero tablero, Mazo mazo) {
+        // Intenta jugar con sus fichas primero
+        if (jugarFicha(tablero)) {
+            return true;
+        }
+
+        // Si no pudo, intenta robar y jugar
+        return intentarRobarYJugar(tablero, mazo);
     }
 
     // Verifica si el jugador tiene fichas restantes
@@ -110,10 +127,11 @@ public class Jugador implements Serializable {
     public int recuentoPuntosJugador() {//metodo cuando se necesitan sumar los ptos cuando se termina una ronda
         int suma = 0;
         for (FichaDomino f : fichas) {
-            suma += f.getExtremoIZQ() + f.getExtremoDER();
+            suma += (f.getExtremoIZQ() + f.getExtremoDER());
         }
         return suma;
     }
+
     public void sumarPuntos(int puntos) {
         this.puntaje += puntos;
     }
@@ -124,7 +142,7 @@ public class Jugador implements Serializable {
     }
 
     public String getNombre() {
-        return nombre;
+        return this.nombre;
     }
 
     public int getPuntaje() {

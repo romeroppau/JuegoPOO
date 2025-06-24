@@ -1,10 +1,13 @@
 package ar.edu.unlu.poo2025.domino.controladores;
 
-import java.io.Serializable;
 import java.rmi.RemoteException;
+import java.util.HashMap;
+import java.util.Map;
+
 import ar.edu.unlu.poo2025.domino.modelos.Eventos;
 import ar.edu.unlu.poo2025.domino.modelos.*;
 import ar.edu.unlu.poo2025.domino.modelos.Jugador;
+import ar.edu.unlu.poo2025.domino.vistas.EstadoVista;
 import ar.edu.unlu.poo2025.domino.vistas.IVista;
 import ar.edu.unlu.rmimvc.cliente.IControladorRemoto;
 import ar.edu.unlu.rmimvc.observer.IObservableRemoto;
@@ -31,15 +34,16 @@ public class Controlador implements IControladorRemoto {
 
     public void iniciarPartida() {
         try {
-            if (modelo.getPuntajeMax() <= 0) {
-                this.vista.mostrarError("Primero debe establecer un puntaje objetivo mayor a 0.");
+            if (this.modelo.getPuntajeMax() <= 50) {
+                this.vista.mostrarError("Primero debe establecer un puntaje objetivo mayor a 50.");
                 return;
             }
-            if (modelo.getCantJugadoresActuales() < 2) {
-                this.vista.mostrarError("Debe haber al menos dos jugadores para iniciar.");
+            if (this.modelo.getCantJugadoresActuales() < 2 || this.modelo.getCantJugadoresActuales() >4) {
+                this.vista.mostrarError("Debe haber al menos dos jugadores y menos de 4 para iniciar.");
                 return;
             }
             this.modelo.iniciarPartida();
+            //ACA SOLO INICIALIZO MAZO, TABLERO, JUGADORINICIAL, JUGADA INICIAL, TURNO_ACTUAL,
         } catch (RemoteException e) {
             this.vista.mostrarError("Error al iniciar partida: " + e.getMessage());
         }
@@ -47,7 +51,7 @@ public class Controlador implements IControladorRemoto {
 
     public void ejecutarTurno() {
         try {//tiene que pasar el turno cuando termina
-            boolean jugo = this.modelo.ejecutarTurno(modelo.getTablero(), modelo.getMazo());
+            boolean jugo = this.modelo.ejecutarTurno(this.modelo.getTablero(), this.modelo.getMazo());
             if (!jugo) {
                 vista.mostrarMensaje("No se pudo jugar en este turno.");
             }
@@ -70,9 +74,19 @@ public class Controlador implements IControladorRemoto {
             return this.modelo.getJugadorActual();
         } catch (RemoteException e) {
             vista.mostrarError("Error al obtener el jugador actual: " + e.getMessage());
-            return null;
+            return null;//hubo error
         }
     }
+
+    public Map<String, Integer> getPuntajesJugadores() {
+        try {
+            return modelo.obtenerPuntajesJugadores();
+        } catch (RemoteException e) {
+            vista.mostrarError("No se pudo obtener el puntaje de los jugadores.");
+            return new HashMap<>();
+        }
+    }
+
 
     public Tablero getTablero() {
         try {
@@ -83,12 +97,38 @@ public class Controlador implements IControladorRemoto {
         }
     }
 
+    public void nuevaMano(){
+        try {
+            this.modelo.nuevaMano();
+        }catch (RemoteException e){
+            this.vista.mostrarError("No se ha podido concretar una nueva mano");
+        }
+    }
+
     public Jugador getGanadorPartido() {
         try {
             return this.modelo.getGanadorPartido();
         } catch (RemoteException e) {
             vista.mostrarError("Error al obtener el ganador del partido: " + e.getMessage());
             return null;
+        }
+    }
+
+    public void establecerPuntajeMaximo(int puntos) {
+        try {
+            modelo.setPuntajeMax(puntos);
+            vista.mostrarMensaje("Puntaje máximo establecido correctamente: " + puntos);
+        } catch (Exception e) {
+            vista.mostrarError("Error al establecer el puntaje máximo: " + e.getMessage());
+        }
+    }
+
+    public void determinarMaxJugadores(int cantidad) {
+        try {
+            modelo.setMaxjugadores(cantidad);
+            vista.mostrarMensaje("Cantidad máxima de jugadores configurada en: " + cantidad);
+        } catch (Exception e) {
+            vista.mostrarError("Error al establecer la cantidad de jugadores: " + e.getMessage());
         }
     }
 
@@ -103,11 +143,20 @@ public class Controlador implements IControladorRemoto {
 
     public void cerrarConexion() {
         try {
-            this.modelo.cerrar(this, this.modelo.getJugadorActual());
+            // Notificamos al modelo que este jugador se desconecta
+            Jugador jugador = this.modelo.getJugadorActual();
+
+            this.modelo.cerrar(this, jugador);
+
+            // Cambiamos la vista localmente si corresponde
+            this.vista.mostrarMensaje("Te has desconectado de la partida.");
+            this.vista.setEstadoActual(EstadoVista.FIN_PARTIDA); // si querés terminar la vista del cliente que se va
+            //modificara solo el estado actual del jugador que este jugando
         } catch (RemoteException e) {
             vista.mostrarError("Error al cerrar la conexión: " + e.getMessage());
         }
     }
+
     public <T extends IObservableRemoto> Controlador(T modelo) {
         try {
             this.setModeloRemoto(modelo);
@@ -154,13 +203,22 @@ public class Controlador implements IControladorRemoto {
                         this.vista.mostrarMensaje("Fin de la mano.");
                         this.vista.actualizar(Eventos.MANO_TERMINADA);
                         break;
+                    case NUEVA_MANO:
+                        this.vista.mostrarMensaje("NUEVA MANO.");
+                        this.vista.actualizar(Eventos.NUEVA_MANO);
+                        break;
                     case JUEGO_BLOQUEADO:
                         this.vista.mostrarMensaje(" El juego se ha bloqueado.");
                         this.vista.actualizar(Eventos.JUEGO_BLOQUEADO);
                         break;
+                    case JUGADOR_DESCONECTADO:
+                        this.vista.mostrarMensaje("Un jugador se ha desconectado.");
+                        this.vista.actualizar(Eventos.JUGADOR_DESCONECTADO);
+                        break;
                     case PARTIDA_TERMINADA:
                         Jugador ganador = ((IPartida) origen).getGanadorPartido();
                         this.vista.mostrarGanador(ganador);
+                        this.vista.actualizar(Eventos.PARTIDA_TERMINADA);
                         break;
                     default:
                         break;
@@ -171,22 +229,6 @@ public class Controlador implements IControladorRemoto {
 
         }
     }
-    public void establecerPuntajeMaximo(int puntos) {
-        try {
-            modelo.setPuntajeMax(puntos);
-            vista.mostrarMensaje("Puntaje máximo establecido correctamente: " + puntos);
-        } catch (Exception e) {
-            vista.mostrarError("Error al establecer el puntaje máximo: " + e.getMessage());
-        }
-    }
 
-    public void determinarMaxJugadores(int cantidad) {
-        try {
-            modelo.setMaxjugadores(cantidad);
-            vista.mostrarMensaje("Cantidad máxima de jugadores configurada en: " + cantidad);
-        } catch (Exception e) {
-            vista.mostrarError("Error al establecer la cantidad de jugadores: " + e.getMessage());
-        }
-    }
 
 }

@@ -5,8 +5,8 @@ import ar.edu.unlu.poo2025.domino.modelos.Eventos;
 import ar.edu.unlu.poo2025.domino.modelos.FichaDomino;
 import ar.edu.unlu.poo2025.domino.modelos.Jugador;
 
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Scanner;
 
 
@@ -14,7 +14,6 @@ public class VistaConsola implements IVista {
     private static final long serialVersionUID = 1L;
 
     private Controlador controlador;
-    //transient indica que el campo no debe serializarse ni enviarse x red
     private Scanner scanner;
     private String nombreJugador;
     private EstadoVista estadoActual;
@@ -25,25 +24,14 @@ public class VistaConsola implements IVista {
         this.estadoActual=EstadoVista.ESTADO_INICIAL;
     }
 
-    @Override
-    public void iniciarJuego() {
-        if (scanner == null) {
-            scanner = new Scanner(System.in);
-        }
-        mostrarMensaje("Es tu turno. Presioná ENTER para jugar.");
-        scanner.nextLine();
-        controlador.ejecutarTurno();
-        estadoActual = EstadoVista.ESPERANDO_TURNO;
-    }
-
     public void iniciar(){
-        estadoActual = EstadoVista.ESPERANDO_JUGADORES;
+        estadoActual = EstadoVista.ESTADO_INICIAL;
         System.out.println("       JUEGO DOMINÓ        ");
         while (estadoActual != EstadoVista.FIN_PARTIDA) {
             MenuGeneral();
 
             // Evitás pedir entrada si la lógica no depende del jugador
-            if (estadoActual == EstadoVista.ESPERANDO_JUGADORES || estadoActual == EstadoVista.JUGANDO) {
+            if (estadoActual == EstadoVista.ESTADO_INICIAL || estadoActual == EstadoVista.JUGANDO || estadoActual == EstadoVista.NUEVA_MANO) {
                 Opciones();
             }
 
@@ -63,11 +51,13 @@ public class VistaConsola implements IVista {
         System.out.println("\n--- ESTADO: " + estadoActual.name() + " ---");
         switch (estadoActual) {
             case ESTADO_INICIAL:
-            case ESPERANDO_JUGADORES:
                 menuConfiguracionInicial();
                 break;
             case JUGANDO:
                 menuJugadorTurno();
+                break;
+            case NUEVA_MANO:
+                menuNuevaMano();
                 break;
             case FIN_PARTIDA:
                 resultadoFinal();
@@ -90,7 +80,7 @@ public class VistaConsola implements IVista {
     }
 
     private void menuJugadorTurno() {
-        Jugador jugador = controlador.getJugadorActual();
+        Jugador jugador = this.controlador.getJugadorActual();
         System.out.println("Turno de: " + jugador.getNombre());
         System.out.println("Tus fichas:");
         ArrayList<FichaDomino> fichas_jugador= jugador.getFichas();
@@ -102,6 +92,14 @@ public class VistaConsola implements IVista {
         System.out.println("2. Ver tablero");
         System.out.println("0. Salir");
         System.out.print("Elegí una opción: ");
+    }
+
+    private void menuNuevaMano(){
+        System.out.println("===== NUEVA MANO =====");
+        System.out.println("1. Ver Jugadores");
+        System.out.println("2. Ver puntajes actual de los jugadores");
+        System.out.println("3. Ver tablero");
+        System.out.println("4. Continuar con la partida");
     }
 
     private void resultadoFinal() {
@@ -116,20 +114,23 @@ public class VistaConsola implements IVista {
         String opcion = scanner.nextLine();
 
         switch (estadoActual) {
-            case ESPERANDO_JUGADORES:
+            case ESTADO_INICIAL:
                 procesamientoConfig(opcion);
                 break;
             case JUGANDO:
-
-            case ESPERANDO_TURNO:
                 procesamientoJuego(opcion);
                 break;
+            case NUEVA_MANO:
+                procesamientoNuevaPartida(opcion);
+                break;
+            //no pongo case FIN_PARTIDA porque nunca va a entrar aca si esta en ese estado
             default:
                 break;
         }
     }
 
     private void procesamientoConfig(String opcion) {
+        //tod esto va a estar en ESTADO_INICIAL
         switch (opcion) {
             case "1":
                 try {
@@ -138,7 +139,7 @@ public class VistaConsola implements IVista {
                     if (cantidad < 2 || cantidad > 4) {
                         mostrarError("Debe ser entre 2 y 4.");
                     } else {
-                        controlador.determinarMaxJugadores(cantidad);
+                        this.controlador.determinarMaxJugadores(cantidad);
                         mostrarMensaje("Cantidad de jugadores establecida: " + cantidad);
                     }
                 } catch (NumberFormatException e) {
@@ -146,28 +147,38 @@ public class VistaConsola implements IVista {
                 }
                 break;
             case "2":
-                System.out.print("Ingrese puntaje objetivo: ");
-                int puntos = Integer.parseInt(scanner.nextLine());
-                controlador.establecerPuntajeMaximo(puntos);
-                mostrarMensaje("Puntaje máximo establecido: " + puntos);
+                System.out.print("Ingrese puntaje objetivo (entre 50 y 150): ");
+                try {
+                    int puntos = Integer.parseInt(scanner.nextLine());
+                    if (puntos >= 50 && puntos <= 150) {
+                        this.controlador.establecerPuntajeMaximo(puntos);
+                        mostrarMensaje("Puntaje máximo establecido: " + puntos);
+                    } else {
+                        mostrarMensaje("Error: El puntaje debe estar entre 50 y 150.");
+                    }
+                } catch (NumberFormatException e) {
+                    mostrarMensaje("Error: Debe ingresar un número entero válido.");
+                }
                 break;
             case "3":
                 System.out.print("Ingrese nombre del jugador: ");
                 String nombre = scanner.nextLine();
-                if (!controlador.agregarJugador(nombre)) {
+                if (!this.controlador.agregarJugador(nombre)) {
                     mostrarError("No se pudo agregar el jugador.");
                 }
                 break;
             case "4":
-                for (Jugador j : controlador.getJugadores()) {
+                for (Jugador j : this.controlador.getJugadores()) {
                     System.out.println("- " + j.getNombre());
                 }
                 break;
             case "5":
-                controlador.iniciarPartida();
+                this.controlador.iniciarPartida();
+                //ACA SOLO INICIALIZO MAZO, TABLERO, JUGADORINICIAL, JUGADA INICIAL, TURNO_ACTUAL,
+                //actualizo a JUGANDO cuando llama desde el controlador a PARTIDA_INICIADA()
                 break;
             case "0":
-                controlador.cerrarConexion();
+                this.controlador.cerrarConexion();
                 estadoActual = EstadoVista.FIN_PARTIDA;
                 break;
             default:
@@ -178,73 +189,92 @@ public class VistaConsola implements IVista {
     private void procesamientoJuego(String opcion) {
         switch (opcion) {
             case "1":
-                controlador.ejecutarTurno();
+                this.controlador.ejecutarTurno();
                 //mostrar estado de tablero automaticamente
-                System.out.println("Tablero:");
-                System.out.println(controlador.getTablero());
+                mostrarMensaje("Tablero:");
+                System.out.println(this.controlador.getTablero());
                 break;
             case "2":
                 System.out.println("Tablero:");
-                System.out.println(controlador.getTablero());
+                System.out.println(this.controlador.getTablero());
                 break;
             case "0":
-                controlador.cerrarConexion();
-                estadoActual = EstadoVista.FIN_PARTIDA;
+                this.controlador.cerrarConexion();
+                this.estadoActual = EstadoVista.FIN_PARTIDA;
                 break;
             default:
                 mostrarError("Opción inválida.");
         }
     }
 
-    private boolean soyElJugadorActual() {
-        Jugador actual = controlador.getJugadorActual();
-        System.out.println("[DEBUG] Soy el jugador actual? " + soyElJugadorActual());
-        return actual != null && actual.getNombre().equals(nombreJugador);
+    private void procesamientoNuevaPartida(String opcion){
+        switch (opcion){
+            case "1":
+                for (Jugador j : this.controlador.getJugadores()) {
+                    System.out.println("- " + j.getNombre());
+                }
+                break;
+            case "2":
+                Map<String, Integer> puntajes = controlador.getPuntajesJugadores();
+                System.out.println("PUNTAJES ACTUALES:");
+                for (Map.Entry<String, Integer> entry : puntajes.entrySet()) {
+                    System.out.println("- " + entry.getKey() + ": " + entry.getValue() + " puntos");
+                }
+                break;
+            case "3":
+                this.controlador.nuevaMano();
+                break;
+            default:
+                mostrarError("Opción inválida.");
+        }
     }
+
 
     @Override
     public void actualizar(Eventos evento) {
         System.out.println("[DEBUG] Evento recibido: " + evento);
         switch (evento) {
             case JUGADOR_AGREGADO:
-                this.estadoActual = EstadoVista.ESPERANDO_JUGADORES;
+                this.estadoActual = EstadoVista.ESTADO_INICIAL;
                 break;
             case PARTIDA_INICIADA:
-                this.estadoActual= EstadoVista.JUGANDO;
+                this.estadoActual = EstadoVista.JUGANDO;
                 break;
             case JUGADA_INICIAL:
+                //se coloco ficha inicial
                 this.estadoActual = EstadoVista.JUGANDO;
-                if (soyElJugadorActual()) {
-                    iniciarJuego();
-                }
                 break;
             case JUGADOR_JUGO_FICHA:
-                //VERIFICO SI SOY YO O NO
-                this.estadoActual = soyElJugadorActual() ? EstadoVista.JUGANDO : EstadoVista.ESPERANDO_TURNO;
+                //logica del juego, jugador ejecuta su turno
+                //dentro de aca, se cambia el turno
+                this.estadoActual = EstadoVista.JUGANDO;
+                mostrarMensaje("Un jugador jugó una ficha.");
+                mostrarMensaje("Tablero actualizado:");
+                System.out.println(this.controlador.getTablero());
                 break;
             case CAMBIO_TURNO:
                 this.estadoActual = EstadoVista.JUGANDO;
+                mostrarMensaje("Hubo un cambio de turno");
                 break;
             case MANO_TERMINADA:
-                this.estadoActual = EstadoVista.JUGANDO;
+                this.estadoActual = EstadoVista.NUEVA_MANO;
                 mostrarMensaje("La mano terminó. Se reinicia una nueva mano.");
-                if (soyElJugadorActual()) {
-                    iniciarJuego();
-                }
                 break;
-
+            case NUEVA_MANO:
+                this.estadoActual = EstadoVista.JUGANDO;
+                mostrarMensaje("Se reinició mano, jugando nuevamente:");
             case JUEGO_BLOQUEADO:
                 this.estadoActual = EstadoVista.JUGANDO;
                 mostrarMensaje("El juego se bloqueó (ningún jugador puede jugar). Se reinicia ronda o finaliza.");
-                if (soyElJugadorActual()) {
-                    iniciarJuego();
-                }
+                break;
+            case JUGADOR_DESCONECTADO:
+                mostrarMensaje("Un jugador se ha desconectado. La partida continuará si hay jugadores suficientes.");
                 break;
             case PARTIDA_TERMINADA:
                 this.estadoActual = EstadoVista.FIN_PARTIDA;
+                mostrarMensaje("FIN PARTIDA.");
                 break;
             default:
-                this.estadoActual = EstadoVista.ESTADO_INICIAL;
                 break;
         }
     }
@@ -275,4 +305,7 @@ public class VistaConsola implements IVista {
         this.controlador=controlador;
     }
 
+    public void setEstadoActual(EstadoVista estadoActual) {
+        this.estadoActual = estadoActual;
+    }
 }

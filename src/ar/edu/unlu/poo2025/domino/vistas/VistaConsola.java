@@ -8,7 +8,6 @@ import ar.edu.unlu.poo2025.domino.modelos.Jugador;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
-import java.io.Serializable;
 
 
 public class VistaConsola implements IVista {
@@ -135,7 +134,7 @@ public class VistaConsola implements IVista {
         switch (opcion) {
             case "1":
                 try {
-                    System.out.print("Ingrese cantidad de jugadores (2 a 4): ");
+                    mostrarMensaje("Ingrese cantidad de jugadores (2 a 4): ");
                     int cantidad = Integer.parseInt(scanner.nextLine());
                     if (cantidad < 2 || cantidad > 4) {
                         mostrarError("Debe ser entre 2 y 4.");
@@ -148,7 +147,7 @@ public class VistaConsola implements IVista {
                 }
                 break;
             case "2":
-                System.out.print("Ingrese puntaje objetivo (entre 50 y 150): ");
+                mostrarMensaje("Ingrese puntaje objetivo (entre 50 y 150): ");
                 try {
                     int puntos = Integer.parseInt(scanner.nextLine());
                     if (puntos >= 50 && puntos <= 150) {
@@ -162,7 +161,7 @@ public class VistaConsola implements IVista {
                 }
                 break;
             case "3":
-                System.out.print("Ingrese nombre del jugador: ");
+                mostrarMensaje("Ingrese nombre del jugador: ");
                 String nombre = scanner.nextLine();
                 if (!this.controlador.agregarJugador(nombre)) {
                     mostrarError("No se pudo agregar el jugador.");
@@ -179,6 +178,7 @@ public class VistaConsola implements IVista {
                 //actualizo a JUGANDO cuando llama desde el controlador a PARTIDA_INICIADA()
                 break;
             case "0":
+                mostrarMensaje("Saliendo de la partida...");
                 this.controlador.cerrarConexion();
                 estadoActual = EstadoVista.FIN_PARTIDA;
                 break;
@@ -285,9 +285,6 @@ public class VistaConsola implements IVista {
             case JUEGO_BLOQUEADO:
                 this.estadoActual = EstadoVista.NUEVA_MANO;
                 mostrarMensaje("El juego se bloqueó, mano terminada por bloqueo.");
-                break;
-            case JUGADOR_DESCONECTADO:
-                mostrarMensaje("Un jugador se ha desconectado. La partida continuará si hay jugadores suficientes.");
                 break;
             case PARTIDA_TERMINADA:
                 this.estadoActual = EstadoVista.FIN_PARTIDA;

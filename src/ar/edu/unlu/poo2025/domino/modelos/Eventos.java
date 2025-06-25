@@ -14,7 +14,6 @@ public enum Eventos implements Serializable{
     MANO_TERMINADA,
     NUEVA_MANO,
     PARTIDA_TERMINADA,
-    JUGADOR_DESCONECTADO,
     JUEGO_BLOQUEADO;
 
 }

@@ -37,7 +37,7 @@ public interface IPartida  extends IObservableRemoto, Remote {
     public FichaDomino getFichaInicial() throws RemoteException;
 
     // Este metodo es nuevo y específico para la desconexión remota segura
-    void cerrar(IObservadorRemoto controlador, Jugador jugador) throws RemoteException;
+    public void cerrar(IObservadorRemoto controlador) throws RemoteException;
 
     //persistencia ACOMODAR
     //boolean guardarMensajes() throws RemoteException;

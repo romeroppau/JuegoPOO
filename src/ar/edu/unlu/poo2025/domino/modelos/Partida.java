@@ -327,17 +327,12 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
     }
 
     @Override
-    public void cerrar(IObservadorRemoto controlador, Jugador jugador) throws RemoteException {
+    public void cerrar(IObservadorRemoto controlador) throws RemoteException {
         removerObservador(controlador);
 
-        jugadores.remove(jugador); // o marcar como desconectado
+        this.ganadorPartido=getJugadorConMayorPuntaje();
+        this.notificarObservadores(Eventos.PARTIDA_TERMINADA);
 
-        if (jugadores.size() < 2) {
-            // Si ya no se puede seguir jugando
-            this.notificarObservadores(Eventos.PARTIDA_TERMINADA);
-        } else {
-            this.notificarObservadores(Eventos.JUGADOR_DESCONECTADO);
-        }
     }
     @Override
     public ManejadorTurnos getManejadorTurnos() throws RemoteException {

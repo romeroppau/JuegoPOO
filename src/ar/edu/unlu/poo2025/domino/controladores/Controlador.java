@@ -3,7 +3,6 @@ package ar.edu.unlu.poo2025.domino.controladores;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
-import java.io.Serializable;
 
 import ar.edu.unlu.poo2025.domino.modelos.Eventos;
 import ar.edu.unlu.poo2025.domino.modelos.*;
@@ -145,15 +144,9 @@ public class Controlador implements IControladorRemoto {
 
     public void cerrarConexion() {
         try {
-            // Notificamos al modelo que este jugador se desconecta
-            Jugador jugador = this.modelo.getJugadorActual();
-
-            this.modelo.cerrar(this, jugador);
-
-            // Cambiamos la vista localmente si corresponde
-            this.vista.mostrarMensaje("Te has desconectado de la partida.");
-            this.vista.setEstadoActual(EstadoVista.FIN_PARTIDA); // si querés terminar la vista del cliente que se va
-            //modificara solo el estado actual del jugador que este jugando
+            this.modelo.cerrar(this); // ya no importa qué jugador es
+            this.vista.mostrarMensaje("Has salido de la partida.");
+            this.vista.setEstadoActual(EstadoVista.FIN_PARTIDA);
         } catch (RemoteException e) {
             vista.mostrarError("Error al cerrar la conexión: " + e.getMessage());
         }
@@ -231,9 +224,6 @@ public class Controlador implements IControladorRemoto {
                         break;
                     case JUEGO_BLOQUEADO:
                         this.vista.actualizar(Eventos.JUEGO_BLOQUEADO);
-                        break;
-                    case JUGADOR_DESCONECTADO:
-                        this.vista.actualizar(Eventos.JUGADOR_DESCONECTADO);
                         break;
                     case PARTIDA_TERMINADA:
                         Jugador ganador = ((IPartida) origen).getGanadorPartido();

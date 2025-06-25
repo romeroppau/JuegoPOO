@@ -8,6 +8,7 @@ import ar.edu.unlu.poo2025.domino.modelos.Jugador;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
+import java.io.Serializable;
 
 
 public class VistaConsola implements IVista {
@@ -29,9 +30,8 @@ public class VistaConsola implements IVista {
         System.out.println("       JUEGO DOMINÓ        ");
         while (estadoActual != EstadoVista.FIN_PARTIDA) {
             MenuGeneral();
-
             // Evitás pedir entrada si la lógica no depende del jugador
-            if (estadoActual == EstadoVista.ESTADO_INICIAL || estadoActual == EstadoVista.JUGANDO || estadoActual == EstadoVista.NUEVA_MANO) {
+            if (estadoActual == EstadoVista.ESTADO_INICIAL || estadoActual == EstadoVista.JUGANDO) {
                 Opciones();
             }
 
@@ -48,6 +48,7 @@ public class VistaConsola implements IVista {
 
     //menues iniciales
     private void MenuGeneral() {
+
         System.out.println("\n--- ESTADO: " + estadoActual.name() + " ---");
         switch (estadoActual) {
             case ESTADO_INICIAL:
@@ -243,14 +244,18 @@ public class VistaConsola implements IVista {
             case JUGADA_INICIAL:
                 //se coloco ficha inicial
                 this.estadoActual = EstadoVista.JUGANDO;
+                FichaDomino ficha = this.controlador.getFichaInicial();
+                Jugador jugador = this.controlador.getJugadorInicial();
+                mostrarMensaje("🎲 La ficha o doble más alto fue " + ficha + " del jugador " + jugador.getNombre());
+                mostrarMensaje("Tablero actualizado:");
+                System.out.println(this.controlador.getTablero());
                 break;
             case JUGADOR_JUGO_FICHA:
                 //logica del juego, jugador ejecuta su turno
                 //dentro de aca, se cambia el turno
                 this.estadoActual = EstadoVista.JUGANDO;
                 mostrarMensaje("Un jugador jugó una ficha.");
-                mostrarMensaje("Tablero actualizado:");
-                System.out.println(this.controlador.getTablero());
+
                 break;
             case CAMBIO_TURNO:
                 this.estadoActual = EstadoVista.JUGANDO;
@@ -258,7 +263,20 @@ public class VistaConsola implements IVista {
                 break;
             case MANO_TERMINADA:
                 this.estadoActual = EstadoVista.NUEVA_MANO;
-                mostrarMensaje("La mano terminó. Se reinicia una nueva mano.");
+                mostrarMensaje("TERMINO LA MANO.");
+
+                Jugador ganador = this.controlador.getGanadorMano();
+                int puntosGanados = this.controlador.getPuntosMano();
+
+                mostrarGanadorMano(ganador,puntosGanados);
+
+                System.out.println("[[[PUNTAJES TRAS LA MANO:]]]");
+                Map<String, Integer> puntajes = controlador.getPuntajesJugadores();
+                for (Map.Entry<String, Integer> entry : puntajes.entrySet()) {
+                    System.out.println("- " + entry.getKey() + ": " + entry.getValue() + " puntos");
+                }
+
+                mostrarMensaje("------> Preparando nueva mano...");
                 break;
             case NUEVA_MANO:
                 this.estadoActual = EstadoVista.JUGANDO;
@@ -288,6 +306,13 @@ public class VistaConsola implements IVista {
         System.out.println("\n--- FIN DEL JUEGO ---");
         System.out.println("Ganador: " + jugador.getNombre());
         estadoActual = EstadoVista.FIN_PARTIDA;
+    }
+    private void mostrarGanadorMano(Jugador ganador, int puntosGanados) {
+        if (ganador != null) {
+            System.out.println("🎉 " + ganador.getNombre() + " ganó la mano y sumó " + puntosGanados + " puntos.");
+        } else {
+            System.out.println("Empate en la mano. No se otorgaron puntos.");
+        }
     }
 
     @Override

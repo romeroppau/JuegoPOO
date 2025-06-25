@@ -3,6 +3,7 @@ package ar.edu.unlu.poo2025.domino.controladores;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
+import java.io.Serializable;
 
 import ar.edu.unlu.poo2025.domino.modelos.Eventos;
 import ar.edu.unlu.poo2025.domino.modelos.*;
@@ -11,6 +12,7 @@ import ar.edu.unlu.poo2025.domino.vistas.EstadoVista;
 import ar.edu.unlu.poo2025.domino.vistas.IVista;
 import ar.edu.unlu.rmimvc.cliente.IControladorRemoto;
 import ar.edu.unlu.rmimvc.observer.IObservableRemoto;
+
 
 public class Controlador implements IControladorRemoto {
     private IPartida modelo;
@@ -51,7 +53,7 @@ public class Controlador implements IControladorRemoto {
 
     public void ejecutarTurno() {
         try {//tiene que pasar el turno cuando termina
-            boolean jugo = this.modelo.ejecutarTurno(this.modelo.getTablero(), this.modelo.getMazo());
+            boolean jugo = this.modelo.ejecutarTurno();
             if (!jugo) {
                 vista.mostrarMensaje("No se pudo jugar en este turno.");
             }
@@ -157,11 +159,34 @@ public class Controlador implements IControladorRemoto {
         }
     }
 
-    public <T extends IObservableRemoto> Controlador(T modelo) {
+    public Jugador getGanadorMano() {
         try {
-            this.setModeloRemoto(modelo);
+            return this.modelo.getUltimoGanadorMano();
         } catch (RemoteException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    public int getPuntosMano() {
+        try {
+            return this.modelo.getPuntosUltimaMano();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public Jugador getJugadorInicial() {
+        try {
+            return this.modelo.getJugadorInicial();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public FichaDomino getFichaInicial() {
+        try {
+            return this.modelo.getFichaInicial();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -192,27 +217,21 @@ public class Controlador implements IControladorRemoto {
                         this.vista.actualizar(Eventos.JUGADA_INICIAL); // actualiza estado gráfico o consola
                         break;
                     case JUGADOR_JUGO_FICHA:
-                        this.vista.mostrarMensaje("Un jugador jugó una ficha.");
                         this.vista.actualizar(Eventos.JUGADOR_JUGO_FICHA); // puede usarse para actualizar tablero
                         break;
                     case CAMBIO_TURNO:
-                        this.vista.mostrarMensaje("Cambio de turno.");
                         this.vista.actualizar(Eventos.CAMBIO_TURNO);
                         break;
                     case MANO_TERMINADA:
-                        this.vista.mostrarMensaje("Fin de la mano.");
                         this.vista.actualizar(Eventos.MANO_TERMINADA);
                         break;
                     case NUEVA_MANO:
-                        this.vista.mostrarMensaje("NUEVA MANO.");
                         this.vista.actualizar(Eventos.NUEVA_MANO);
                         break;
                     case JUEGO_BLOQUEADO:
-                        this.vista.mostrarMensaje(" El juego se ha bloqueado.");
                         this.vista.actualizar(Eventos.JUEGO_BLOQUEADO);
                         break;
                     case JUGADOR_DESCONECTADO:
-                        this.vista.mostrarMensaje("Un jugador se ha desconectado.");
                         this.vista.actualizar(Eventos.JUGADOR_DESCONECTADO);
                         break;
                     case PARTIDA_TERMINADA:
@@ -229,6 +248,5 @@ public class Controlador implements IControladorRemoto {
 
         }
     }
-
 
 }

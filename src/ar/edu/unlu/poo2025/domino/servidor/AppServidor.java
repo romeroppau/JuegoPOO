@@ -24,7 +24,7 @@ public class AppServidor {
 
         try {
             // 1. Crear modelo de dominio (Partida)
-            Partida partida = new Partida(null, new Tablero(), new Mazo(), 0, new ArrayList<>());
+            Partida partida = new Partida( new Tablero(), new Mazo(), 0, new ArrayList<>());
 
             // 2. Crear servidor y vincular modelo
             Servidor servidor = new Servidor(ip, puerto);

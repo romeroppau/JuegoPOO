@@ -23,9 +23,16 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
     private ArrayList<Jugador> jugadores;
     private ArrayList<FichaDomino> fichasJugadores;
     private ManejadorTurnos manejadorTurnos;
+    private  boolean manoTerminada=false;
+    //metodos para mostrar los puntos y el ganador despues de cada mano
+    private Jugador ultimoGanadorMano;
+    private int puntosUltimaMano;
+    //metodos para mostrar quien es el que puso la primera ficha y cual fue
+    private FichaDomino fichaInicial;
+    private Jugador jugadorInicial;
 
 
-    public Partida( Tablero tablero, Mazo mazo, int puntajeMax, ArrayList<Jugador> jugadores) throws RemoteException{
+    public Partida(Tablero tablero, Mazo mazo, int puntajeMax, ArrayList<Jugador> jugadores) throws RemoteException{
         //this.jugadorActual=jugadorActual; no lo pongo aca porque se define logicamente en los metodos.
         this.jugadores = jugadores;
         this.cantJugadoresActuales = 0;
@@ -40,9 +47,6 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
         maxjugadores=num;
     }
 
-    public void asignarFichas(ArrayList<FichaDomino> fichasPorJugador) throws RemoteException{
-        this.fichasJugadores = fichasPorJugador;
-    }
 
     //verifica que jugador arranca y juega la primer ficha
     public Jugador jugadorInicial() throws RemoteException{
@@ -56,7 +60,8 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
                 int valor = doble.getExtremoIZQ();//el izq o der es lo mismo pq son =
                 if (valor > mejorValor) {
                     mejorValor = valor;
-                    jugadorActual = jugador; //defino el primer jugador
+                    this.jugadorActual = jugador; //defino el primer jugador
+                    this.jugadorInicial=jugador;
                     mejorFicha = doble;
                 }
             }
@@ -68,11 +73,15 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
                 int suma = ficha.getExtremoIZQ() + ficha.getExtremoDER();//vuelve a sumar para guardar el valor
                 if (suma > mejorValor) {
                     mejorValor = suma;
-                    jugadorActual = jugador;
+                    this.jugadorActual = jugador; //defino el primer jugador
+                    this.jugadorInicial=jugador;
                     mejorFicha = ficha;
                 }
             }
         }
+        // Guardar la ficha inicial
+        this.fichaInicial = mejorFicha;
+
         // colocar ficha en el tablero
         if (mejorFicha != null) {
             jugadaInicial(mejorFicha,jugadorActual);
@@ -116,9 +125,6 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
         if (this.tablero == null) {
             this.tablero = new Tablero();
         }
-        else {
-            return false; //si da falso pudo haber fallado la inicializacion del tablero
-        }
 
         this.mazo.inicializarFichas();
         this.mazo.repartirFichas(jugadores);
@@ -127,6 +133,7 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
         //tengo el jugador que arranca en jugadorActual, solo tengo que llamar a la funcion
         jugadorInicial();//ya asigna la primer ficha al tablero y establece en jugadorActual, quien inicia la partida
         this.manejadorTurnos.setTurnoActual(jugadores.indexOf(jugadorActual)); // seteo del que arranca
+
         this.notificarObservadores(Eventos.PARTIDA_INICIADA);
         this.notificarObservadores(Eventos.JUGADA_INICIAL);
 
@@ -140,10 +147,14 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
     }
 
     //manejara la logica de los turnos
-    public boolean ejecutarTurno(Tablero tablero, Mazo mazo) throws RemoteException{
+    public boolean ejecutarTurno() throws RemoteException{
+        if (manoTerminada) {
+            return false; // no seguir ejecutando
+        }
+
         jugadorActual=manejadorTurnos.getJugadorActual();//actualizo por las dudas
         if (jugadorActual.tieneFichas()) {
-            boolean pudoJugar = jugadorActual.realizarTurno(tablero, mazo);
+            boolean pudoJugar = jugadorActual.realizarTurno(this.tablero, this.mazo);
 
             if (pudoJugar) {
                 this.notificarObservadores(Eventos.JUGADOR_JUGO_FICHA);
@@ -173,14 +184,19 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
     }
 
     private void terminoRonda(Jugador ganadorMano) throws RemoteException{
+        manoTerminada=true;
         int puntosGanados = recuentoPuntosMano(ganadorMano);
+        this.ultimoGanadorMano=ganadorMano;
+        this.puntosUltimaMano=puntosGanados;
+
         ganadorMano.sumarPuntos(puntosGanados);
         this.notificarObservadores(Eventos.MANO_TERMINADA);
 
-        if (ganadorMano.getPuntaje() >= puntajeMax) {
+        if (ganadorMano.getPuntaje() >= this.puntajeMax) {
             hayGanadorPartido(ganadorMano);
-        } else {
-            nuevaMano(); // Reinicia la mano, incluyendo el manejador de turnos
+        }
+        else {
+            nuevaMano();
         }
     }
 
@@ -202,9 +218,10 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
         //tengo el jugador que arranca en jugadorActual, solo tengo que llamar a la funcion
         jugadorInicial();//ya asigna la primer ficha al tablero y establece en jugadorActual, quien inicia la partida
         this.manejadorTurnos.setTurnoActual(jugadores.indexOf(jugadorActual)); // seteo del que arranca
+        this.manoTerminada=false;
         this.notificarObservadores(Eventos.NUEVA_MANO);
 
-        ejecutarTurno(tablero,mazo);
+        ejecutarTurno();
 
     }
 
@@ -240,7 +257,7 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
         Jugador ganador = null;
         int menorPuntaje = Integer.MAX_VALUE;
         ArrayList<Jugador> empatados = new ArrayList<>();
-        this.notificarObservadores(Eventos.JUEGO_BLOQUEADO);
+
         for (Jugador j : jugadores) {
             int puntos = j.recuentoPuntosJugador();
             if (puntos < menorPuntaje) {
@@ -272,10 +289,15 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
         }
         if(ganador != null){
             ganador.sumarPuntos(puntosGanados);
+            this.ultimoGanadorMano = ganador;
+            this.puntosUltimaMano = puntosGanados;
         }
 
+        this.notificarObservadores(Eventos.JUEGO_BLOQUEADO);
+        this.notificarObservadores(Eventos.MANO_TERMINADA);
+
         // Verificás si ganó la partida
-        if ((ganador != null ? ganador.getPuntaje() : 0) >= puntajeMax) {
+        if (ganador != null && ganador.getPuntaje() >= puntajeMax) {
             hayGanadorPartido(ganador); // ← esto asigna también a ganadorPartido
         } else {
             nuevaMano(); // sigue jugando
@@ -378,6 +400,20 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
     public int getPuntajeMax() throws RemoteException{
         return puntajeMax;
     }
+    public Jugador getUltimoGanadorMano() throws RemoteException{
+        return ultimoGanadorMano;
+    }
+    public int getPuntosUltimaMano() throws RemoteException{
+        return puntosUltimaMano;
+    }
+    public Jugador getJugadorInicial() throws RemoteException{
+        return this.jugadorInicial;
+    }
+
+    public FichaDomino getFichaInicial() throws RemoteException{
+        return this.fichaInicial;
+    }
+
 
     // Setters
     public void setJugadorActual(Jugador jugadorActual) throws RemoteException{

@@ -281,9 +281,10 @@ public class VistaConsola implements IVista {
             case NUEVA_MANO:
                 this.estadoActual = EstadoVista.JUGANDO;
                 mostrarMensaje("Se reinició mano, jugando nuevamente:");
+                break;
             case JUEGO_BLOQUEADO:
-                this.estadoActual = EstadoVista.JUGANDO;
-                mostrarMensaje("El juego se bloqueó (ningún jugador puede jugar). Se reinicia ronda o finaliza.");
+                this.estadoActual = EstadoVista.NUEVA_MANO;
+                mostrarMensaje("El juego se bloqueó, mano terminada por bloqueo.");
                 break;
             case JUGADOR_DESCONECTADO:
                 mostrarMensaje("Un jugador se ha desconectado. La partida continuará si hay jugadores suficientes.");

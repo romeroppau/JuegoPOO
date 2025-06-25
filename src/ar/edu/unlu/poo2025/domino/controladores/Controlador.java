@@ -165,6 +165,7 @@ public class Controlador implements IControladorRemoto {
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
+
     }
 
     public int getPuntosMano() {

@@ -1,5 +1,11 @@
 # 🎲 Juego de Dominó - POO en Java
 
+## 📌 Diagrama UML
+
+_A continuación se muestra el diagrama UML del sistema:_
+
+![Juego - poo (2)](https://github.com/user-attachments/assets/2fb8d2ee-1069-4e1a-8814-bacf35b06684)
+
 ## 📌 Objetivo
 
 Diseñar un juego de dominó utilizando **programación orientada a objetos (POO)**, que permita partidas de **2 a 4 jugadores**, siguiendo las reglas tradicionales adaptadas con flujo de turnos, puntuación y manejo dinámico de rondas.
@@ -93,15 +99,6 @@ Diseñar un juego de dominó utilizando **programación orientada a objetos (POO
 - Se suman las fichas restantes de los oponentes.
 - Se redondea al múltiplo de 5 más cercano.
 - Se acumula al puntaje del ganador.
-
----
-
-## 📌 Diagrama UML
-
-_A continuación se muestra el diagrama UML del sistema:_
-
-![Juego - poo (2)](https://github.com/user-attachments/assets/2fb8d2ee-1069-4e1a-8814-bacf35b06684)
-
 
 ---
 

@@ -100,7 +100,8 @@ Diseñar un juego de dominó utilizando **programación orientada a objetos (POO
 
 _A continuación se muestra el diagrama UML del sistema:_
 
-![UML del Juego de Dominó](C:\Users\romer\Downloads\Juego - poo (2).png)
+![Juego - poo (2)](https://github.com/user-attachments/assets/2fb8d2ee-1069-4e1a-8814-bacf35b06684)
+
 
 ---
 

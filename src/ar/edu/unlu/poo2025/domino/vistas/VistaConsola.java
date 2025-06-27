@@ -17,17 +17,16 @@ public class VistaConsola implements IVista {
     private Scanner scanner;
     private String nombreJugador;
     private EstadoVista estadoActual;
-    private boolean juegoYaIniciado=false;
 
     public VistaConsola() {
         this.scanner=new Scanner(System.in);;
         this.estadoActual=EstadoVista.ESTADO_INICIAL;
     }
 
-    public void iniciar(){
+    public void iniciar(){//setear la configuracion inicial de la vista
         estadoActual = EstadoVista.ESTADO_INICIAL;
-        System.out.println("       JUEGO DOMINÓ        ");
-        while (estadoActual != EstadoVista.FIN_PARTIDA) {
+        mostrarMensaje("       JUEGO DOMINÓ        ");
+        while (estadoActual != EstadoVista.FIN_PARTIDA) {//maneja flujo de juego
             MenuGeneral();
             // Evitás pedir entrada si la lógica no depende del jugador
             if (estadoActual == EstadoVista.ESTADO_INICIAL || estadoActual == EstadoVista.JUGANDO) {
@@ -47,7 +46,6 @@ public class VistaConsola implements IVista {
 
     //menues iniciales
     private void MenuGeneral() {
-
         System.out.println("\n--- ESTADO: " + estadoActual.name() + " ---");
         switch (estadoActual) {
             case ESTADO_INICIAL:
@@ -63,7 +61,7 @@ public class VistaConsola implements IVista {
                 resultadoFinal();
                 break;
             default:
-                System.out.println("Esperando acciones del juego...");
+                mostrarMensaje("Esperando acciones del juego...");
                 break;
         }
     }
@@ -81,20 +79,24 @@ public class VistaConsola implements IVista {
 
     private void menuJugadorTurno() {
         Jugador jugador = this.controlador.getJugadorActual();
-        System.out.println("Turno de: " + jugador.getNombre());
-        System.out.println("Tus fichas:");
+        mostrarMensaje("Turno de: " + jugador.getNombre());
+        mostrarMensaje("Tus fichas:");
         ArrayList<FichaDomino> fichas_jugador= jugador.getFichas();
         for (int i = 0; i < fichas_jugador.size(); i++) {
             System.out.println(i + ". " + fichas_jugador.get(i));
         }
+        mostrarMensaje("Tablero actualizado:");
+        System.out.println(this.controlador.getTablero());
 
-        System.out.println("1. Intentar jugar");
-        System.out.println("2. Ver tablero");
-        System.out.println("0. Salir");
+        System.out.println("\n Opciones:");
+        System.out.println("1. Ver combinaciones posibles"); // llama a verFichasJugables()
+        System.out.println("2. Jugar una ficha (si hay combinaciones)");
+        System.out.println("3. Sacar del mazo (si no tenés combinaciones)");
+        System.out.println("0. Salir del juego");
         System.out.print("Elegí una opción: ");
     }
 
-    private void menuNuevaMano(){
+    private void menuNuevaMano(){//acomodar, no esta siendo usada
         System.out.println("===== NUEVA MANO =====");
         System.out.println("1. Ver Jugadores");
         System.out.println("2. Ver puntajes actual de los jugadores");
@@ -103,7 +105,7 @@ public class VistaConsola implements IVista {
     }
 
     private void resultadoFinal() {
-        System.out.println("Fin de la partida.");
+        mostrarMensaje("Fin de la partida.");
         Jugador ganador = controlador.getGanadorPartido();
         if (ganador != null) {
             mostrarGanador(ganador);
@@ -147,21 +149,21 @@ public class VistaConsola implements IVista {
                 }
                 break;
             case "2":
-                mostrarMensaje("Ingrese puntaje objetivo (entre 50 y 150): ");
+                mostrarMensaje("Ingrese puntaje objetivo (entre 20 y 150): ");
                 try {
                     int puntos = Integer.parseInt(scanner.nextLine());
-                    if (puntos >= 50 && puntos <= 150) {
+                    if (puntos >= 20 && puntos <= 150) {
                         this.controlador.establecerPuntajeMaximo(puntos);
                         mostrarMensaje("Puntaje máximo establecido: " + puntos);
                     } else {
-                        mostrarMensaje("Error: El puntaje debe estar entre 50 y 150.");
+                        mostrarError("Error: El puntaje debe estar entre 20 y 150.");
                     }
                 } catch (NumberFormatException e) {
-                    mostrarMensaje("Error: Debe ingresar un número entero válido.");
+                    mostrarError("Error: Debe ingresar un número entero válido.");
                 }
                 break;
             case "3":
-                mostrarMensaje("Ingrese nombre del jugador: ");
+                System.out.print("Ingrese nombre del jugador: ");
                 String nombre = scanner.nextLine();
                 if (!this.controlador.agregarJugador(nombre)) {
                     mostrarError("No se pudo agregar el jugador.");
@@ -190,21 +192,46 @@ public class VistaConsola implements IVista {
     private void procesamientoJuego(String opcion) {
         switch (opcion) {
             case "1":
-                this.controlador.ejecutarTurno();
-                //mostrar estado de tablero automaticamente
-                mostrarMensaje("Tablero:");
-                System.out.println(this.controlador.getTablero());
+                // Mostrar combinaciones posibles
+                ArrayList<FichaDomino> combinaciones = this.controlador.verFichasJugables();
+                if (combinaciones.isEmpty()) {
+                    mostrarError(" No hay combinaciones posibles --> Debés sacar del pozo.");
+                } else {
+                    mostrarMensaje("Tus fichas jugables:");
+                    for (int i = 0; i < combinaciones.size(); i++) {
+                        System.out.println("[" + i + "] " + combinaciones.get(i));
+                    }
+                }
                 break;
             case "2":
-                System.out.println("Tablero:");
-                System.out.println(this.controlador.getTablero());
+                ArrayList<FichaDomino> jugables = controlador.verFichasJugables();
+                if (jugables.isEmpty()) {
+                    mostrarError(" No hay jugadas posibles. Usá la opción 3 para sacar del pozo.");
+                } else {
+                    mostrarMensaje("Elegí el número de la ficha que querés jugar: ");
+                    try {
+                        int indice = Integer.parseInt(scanner.nextLine());
+                        if (indice >= 0 && indice < jugables.size()) {
+                            FichaDomino fichaElegida = jugables.get(indice);
+                            controlador.ejecutarTurnoInteractivo(fichaElegida);
+                        } else {
+                            mostrarError("Índice inválido.");
+                        }
+                    } catch (NumberFormatException e) {
+                        mostrarError("Ingresá un número válido.");
+                    }
+                }
+                break;
+            case "3":
+                this.controlador.sacarHastaTenerJugada(); // El modelo notificará si hay jugadas disponibles luego
                 break;
             case "0":
+                mostrarMensaje("Saliendo de la partida...");
                 this.controlador.cerrarConexion();
-                this.estadoActual = EstadoVista.FIN_PARTIDA;
+                estadoActual = EstadoVista.FIN_PARTIDA;
                 break;
             default:
-                mostrarError("Opción inválida.");
+                mostrarError(" Opción inválida. Intentá nuevamente.");
         }
     }
 
@@ -246,7 +273,7 @@ public class VistaConsola implements IVista {
                 this.estadoActual = EstadoVista.JUGANDO;
                 FichaDomino ficha = this.controlador.getFichaInicial();
                 Jugador jugador = this.controlador.getJugadorInicial();
-                mostrarMensaje("🎲 La ficha o doble más alto fue " + ficha + " del jugador " + jugador.getNombre());
+                mostrarMensaje(" La ficha o doble más alto fue " + ficha + " del jugador " + jugador.getNombre());
                 mostrarMensaje("Tablero actualizado:");
                 System.out.println(this.controlador.getTablero());
                 break;
@@ -255,11 +282,25 @@ public class VistaConsola implements IVista {
                 //dentro de aca, se cambia el turno
                 this.estadoActual = EstadoVista.JUGANDO;
                 mostrarMensaje("Un jugador jugó una ficha.");
-
                 break;
             case CAMBIO_TURNO:
                 this.estadoActual = EstadoVista.JUGANDO;
                 mostrarMensaje("Hubo un cambio de turno");
+                break;
+            case MOSTRAR_FICHAS_DISPONIBLES:
+                this.estadoActual = EstadoVista.JUGANDO;
+                ArrayList<FichaDomino> jugables = controlador.verFichasJugables();
+                if (jugables.isEmpty()) {
+                    mostrarError(" No hay combinaciones disponibles.");
+                } else {
+                    mostrarMensaje(" Fichas jugables:");
+                    for (int i = 0; i < jugables.size(); i++) {
+                        System.out.println("[" + i + "] " + jugables.get(i));
+                    }
+                }
+                break;
+            case SACA_FICHA_DEL_MAZO:
+                mostrarMensaje("🃏 Sacaste una ficha del mazo.");
                 break;
             case MANO_TERMINADA:
                 this.estadoActual = EstadoVista.NUEVA_MANO;
@@ -281,10 +322,9 @@ public class VistaConsola implements IVista {
             case NUEVA_MANO:
                 this.estadoActual = EstadoVista.JUGANDO;
                 mostrarMensaje("Se reinició mano, jugando nuevamente:");
-                break;
             case JUEGO_BLOQUEADO:
-                this.estadoActual = EstadoVista.NUEVA_MANO;
-                mostrarMensaje("El juego se bloqueó, mano terminada por bloqueo.");
+                this.estadoActual = EstadoVista.JUGANDO;
+                mostrarMensaje("El juego se bloqueó (ningún jugador puede jugar). Se reinicia ronda o finaliza.");
                 break;
             case PARTIDA_TERMINADA:
                 this.estadoActual = EstadoVista.FIN_PARTIDA;
@@ -301,15 +341,15 @@ public class VistaConsola implements IVista {
 
     @Override
     public void mostrarGanador(Jugador jugador) {
-        System.out.println("\n--- FIN DEL JUEGO ---");
-        System.out.println("Ganador: " + jugador.getNombre());
+        mostrarMensaje("\n--- FIN DEL JUEGO ---");
+        mostrarMensaje("Ganador: " + jugador.getNombre());
         estadoActual = EstadoVista.FIN_PARTIDA;
     }
     private void mostrarGanadorMano(Jugador ganador, int puntosGanados) {
         if (ganador != null) {
-            System.out.println("🎉 " + ganador.getNombre() + " ganó la mano y sumó " + puntosGanados + " puntos.");
+            mostrarMensaje("****** " + ganador.getNombre() + " ganó la mano y sumó " + puntosGanados + " puntos. ******");
         } else {
-            System.out.println("Empate en la mano. No se otorgaron puntos.");
+            mostrarMensaje("Empate en la mano. No se otorgaron puntos.");
         }
     }
 
@@ -331,4 +371,6 @@ public class VistaConsola implements IVista {
     public void setEstadoActual(EstadoVista estadoActual) {
         this.estadoActual = estadoActual;
     }
+
+
 }

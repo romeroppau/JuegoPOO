@@ -38,8 +38,4 @@ public class Mazo implements Serializable {
     public boolean estaVacio() {
         return fichasARepartir.isEmpty();
     }
-
-    public ArrayList<FichaDomino> getFichasARepartir() {
-        return fichasARepartir;
-    }
 }

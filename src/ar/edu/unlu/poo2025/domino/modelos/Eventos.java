@@ -1,5 +1,6 @@
 package ar.edu.unlu.poo2025.domino.modelos;
 import java.io.Serializable;
+
 public enum Eventos implements Serializable{
     //definir un conjunto de constantes que representan eventos clave que pueden ocurrir en el juego
     //cambios significativos en el estado del juego que la vista o
@@ -14,6 +15,11 @@ public enum Eventos implements Serializable{
     MANO_TERMINADA,
     NUEVA_MANO,
     PARTIDA_TERMINADA,
-    JUEGO_BLOQUEADO;
+    JUEGO_BLOQUEADO,
+
+    //interactivo
+    SACA_FICHA_DEL_MAZO,
+    MOSTRAR_FICHAS_DISPONIBLES;
+
 
 }

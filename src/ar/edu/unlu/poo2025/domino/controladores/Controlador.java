@@ -1,6 +1,7 @@
 package ar.edu.unlu.poo2025.domino.controladores;
 
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,8 +36,8 @@ public class Controlador implements IControladorRemoto {
 
     public void iniciarPartida() {
         try {
-            if (this.modelo.getPuntajeMax() <= 50) {
-                this.vista.mostrarError("Primero debe establecer un puntaje objetivo mayor a 50.");
+            if (this.modelo.getPuntajeMax() <= 20) {
+                this.vista.mostrarError("Primero debe establecer un puntaje objetivo mayor a 20.");
                 return;
             }
             if (this.modelo.getCantJugadoresActuales() < 2 || this.modelo.getCantJugadoresActuales() >4) {
@@ -50,16 +51,6 @@ public class Controlador implements IControladorRemoto {
         }
     }
 
-    public void ejecutarTurno() {
-        try {//tiene que pasar el turno cuando termina
-            boolean jugo = this.modelo.ejecutarTurno();
-            if (!jugo) {
-                vista.mostrarMensaje("No se pudo jugar en este turno.");
-            }
-        } catch (RemoteException e) {
-            vista.mostrarError("Error al ejecutar turno: " + e.getMessage());
-        }
-    }
 
     public Jugador[] getJugadores() {
         try {
@@ -184,6 +175,34 @@ public class Controlador implements IControladorRemoto {
         }
     }
 
+    //interactivo
+    public ArrayList<FichaDomino> verFichasJugables() {
+        try {
+            return this.modelo.verFichasJugables();
+        }catch (RemoteException e){
+            throw new RuntimeException(e);
+        }
+    }
+    public void ejecutarTurnoInteractivo(FichaDomino ficha) {
+        try {
+            int indiceReal = this.modelo.getIndiceFichaJugadorActual(ficha);
+            if (indiceReal != -1) {
+                this.modelo.ejecutarTurnoInteractivo(indiceReal);
+            } else {
+                throw new RuntimeException("Ficha no encontrada en la mano del jugador.");
+            }
+        }catch (RemoteException e){
+            throw new RuntimeException(e);
+        }
+    }
+    public void sacarHastaTenerJugada(){
+        try{
+            this.modelo.sacarHastaTenerJugada();
+        }catch (RemoteException e){
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public <T extends IObservableRemoto> void setModeloRemoto(T modeloRemoto) throws RemoteException {
         this.modelo = (IPartida) modeloRemoto;
@@ -212,6 +231,12 @@ public class Controlador implements IControladorRemoto {
                         break;
                     case JUGADOR_JUGO_FICHA:
                         this.vista.actualizar(Eventos.JUGADOR_JUGO_FICHA); // puede usarse para actualizar tablero
+                        break;
+                    case SACA_FICHA_DEL_MAZO:
+                        this.vista.actualizar(Eventos.SACA_FICHA_DEL_MAZO);
+                        break;
+                    case MOSTRAR_FICHAS_DISPONIBLES:
+                        this.vista.actualizar(Eventos.MOSTRAR_FICHAS_DISPONIBLES);
                         break;
                     case CAMBIO_TURNO:
                         this.vista.actualizar(Eventos.CAMBIO_TURNO);

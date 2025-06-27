@@ -42,11 +42,6 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
         this.puntajeMax=puntajeMax;
         this.fichasJugadores= new ArrayList<>();
     }
-    //validar que sean 2, 3 o 4
-    public void determinarMaxJugadores(int num) throws RemoteException{
-        maxjugadores=num;
-    }
-
 
     //verifica que jugador arranca y juega la primer ficha
     public Jugador jugadorInicial() throws RemoteException{
@@ -90,6 +85,7 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
         return this.jugadorActual;//si devuelve null, algo paso
     }
     //solo agrega la primer ficha al tablero
+
     public boolean jugadaInicial(FichaDomino fichaInicial, Jugador jugadorInicial) throws RemoteException{
         boolean rta=false;
         if(tablero.agregaFichaTablero(fichaInicial)) {
@@ -155,24 +151,20 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
         jugadorActual=manejadorTurnos.getJugadorActual();//actualizo por las dudas
         if (jugadorActual.tieneFichas()) {
             boolean pudoJugar = jugadorActual.realizarTurno(this.tablero, this.mazo);
-
             if (pudoJugar) {
                 this.notificarObservadores(Eventos.JUGADOR_JUGO_FICHA);
                 jugadoresQueNoPuedieronJugar = 0;
-
                 if (!jugadorActual.tieneFichas()) {
                     // Ganó la mano
                     terminoRonda(jugadorActual);
                     return true;
                 }
-
             } else {
                 jugadoresQueNoPuedieronJugar++;
             }
         } else {
             jugadoresQueNoPuedieronJugar++;
         }
-
         // Verificar si el juego está bloqueado
         if (jugadoresQueNoPuedieronJugar == getCantJugadoresActuales() && mazo.estaVacio()) {
             bloqueoJuego();
@@ -258,6 +250,7 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
         int menorPuntaje = Integer.MAX_VALUE;
         ArrayList<Jugador> empatados = new ArrayList<>();
 
+        //
         for (Jugador j : jugadores) {
             int puntos = j.recuentoPuntosJugador();
             if (puntos < menorPuntaje) {
@@ -303,7 +296,7 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
             nuevaMano(); // sigue jugando
         }
 
-        jugadoresQueNoPuedieronJugar = 0; // reinicio el contador
+        this.jugadoresQueNoPuedieronJugar = 0; // reinicio el contador
     }
 
     @Override
@@ -332,12 +325,67 @@ public class Partida extends ObservableRemoto implements IPartida, Serializable 
 
         this.ganadorPartido=getJugadorConMayorPuntaje();
         this.notificarObservadores(Eventos.PARTIDA_TERMINADA);
+    }
 
+    //interactivo
+    @Override //ejecuta el turno cuando el jugador ya eligio la ficha
+    public boolean ejecutarTurnoInteractivo(int indice) throws RemoteException{
+        if (manoTerminada) return false;
+
+        if (jugadorActual.tieneJugadaValida(this.tablero)) {
+            boolean pudo = jugadorActual.jugarFichaElegida(indice, tablero);
+            if (pudo) {
+                this.notificarObservadores(Eventos.JUGADOR_JUGO_FICHA);
+                jugadoresQueNoPuedieronJugar = 0;
+
+                if (!jugadorActual.tieneFichas()) {
+                    terminoRonda(jugadorActual);
+                } else {
+                    avanzarTurno();
+                }
+            }
+        } else {
+            sacarHastaTenerJugada(); // el metodo se encarga del flujo
+        }
+
+        return true;
     }
+
     @Override
-    public ManejadorTurnos getManejadorTurnos() throws RemoteException {
-        return manejadorTurnos;
+    public void sacarHastaTenerJugada() throws RemoteException {
+        FichaDomino ficha_auxiliar = null;
+        while (!jugadorActual.tieneJugadaValida(tablero) && !mazo.estaVacio()) {
+            //MIENTRAS NO TENGA COMBINACION Y EL MAZO ESTE CON FICHAS
+            FichaDomino fichaSacada = mazo.robarFicha();
+            jugadorActual.agregarFicha(fichaSacada);
+            ficha_auxiliar=fichaSacada;
+            this.notificarObservadores(Eventos.SACA_FICHA_DEL_MAZO); // para que Vista actualice
+        }
+
+        if (jugadorActual.tieneJugadaValida(tablero)) {
+            this.notificarObservadores(Eventos.MOSTRAR_FICHAS_DISPONIBLES);
+            //la vista va a llamar a ejecutar el turno una vez que ya el usuario haya elegido
+        } else if (mazo.estaVacio()) {
+            jugadoresQueNoPuedieronJugar++;
+
+            if (jugadoresQueNoPuedieronJugar == getCantJugadoresActuales()) {
+                bloqueoJuego();
+            } else {
+                avanzarTurno();
+            }
+        }
     }
+
+    @Override
+    public int getIndiceFichaJugadorActual(FichaDomino ficha) throws RemoteException {
+        return jugadorActual.getIndiceFicha(ficha);
+    }
+
+    @Override
+    public ArrayList<FichaDomino> verFichasJugables() throws RemoteException{
+        return jugadorActual.obtenerFichasJugables(this.tablero);
+    }
+
 
     /*
     //persistencia ACOMODAR

@@ -5,6 +5,7 @@ import ar.edu.unlu.rmimvc.observer.IObservadorRemoto;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Map;
 
 public interface IPartida  extends IObservableRemoto, Remote {
@@ -29,7 +30,7 @@ public interface IPartida  extends IObservableRemoto, Remote {
     public int getCantJugadoresActuales() throws RemoteException;
     public void setPuntajeMax(int puntajeMax) throws RemoteException;
     public void setMaxjugadores(int maxjugadores)throws RemoteException;
-    public ManejadorTurnos getManejadorTurnos() throws RemoteException;
+
     //para mostrar
     public Jugador getUltimoGanadorMano() throws RemoteException;
     public int getPuntosUltimaMano() throws RemoteException;
@@ -38,6 +39,13 @@ public interface IPartida  extends IObservableRemoto, Remote {
 
     // Este metodo es nuevo y específico para la desconexión remota segura
     public void cerrar(IObservadorRemoto controlador) throws RemoteException;
+
+    //interactivo
+    public boolean ejecutarTurnoInteractivo(int indice) throws RemoteException;
+    public ArrayList<FichaDomino> verFichasJugables() throws RemoteException;
+    public void sacarHastaTenerJugada() throws RemoteException;
+
+    public int getIndiceFichaJugadorActual(FichaDomino ficha) throws RemoteException;
 
     //persistencia ACOMODAR
     //boolean guardarMensajes() throws RemoteException;

@@ -20,10 +20,6 @@ public class ManejadorTurnos implements Serializable {
         } // Cola circular
     }
 
-    public int getTurnoActual() {
-        return turnoActual;//devuelve el indice
-    }
-
     public void setTurnoActual(int turnoActual) {
         this.turnoActual = turnoActual;
     }

@@ -15,26 +15,6 @@ public class Jugador implements Serializable {
         this.fichas = new ArrayList<>();
     }
 
-    public boolean tieneFichaDoble() {
-        for (FichaDomino f : fichas) {
-            if (f.esfichaDoble()) {
-                return true;
-            }
-        }
-        return false;
-    }
-    /*
-    // devuelve las fichas dobles
-    public ArrayList<FichaDomino> verificarFichaDoble() {
-        ArrayList<FichaDomino> fichasDobles = new ArrayList<>();
-        for (FichaDomino f : fichas) {
-            if (f.esfichaDoble()) {
-                fichasDobles.add(f);
-            }
-        }
-        return fichasDobles;
-    }*/
-
     // Devuelve la ficha doble más alta que tenga el jugador
     public FichaDomino dobleMasAlto() {
         FichaDomino mejor = null;
@@ -64,16 +44,6 @@ public class Jugador implements Serializable {
             }
         }
         return mejor;//devuelve la ficha mas alta
-    }
-
-    // Verifica si puede jugar sin modificar el tablero
-    public boolean tieneJugadaValida(Tablero tablero) {
-        for (FichaDomino ficha : fichas) {
-            if (tablero.fichaValida(ficha)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     // Intenta jugar si puede ( sin robar)
@@ -119,11 +89,6 @@ public class Jugador implements Serializable {
         return !fichas.isEmpty(); // Verifica si la lista de fichas no está vacía
     }
 
-    public FichaDomino nuevaMano() {
-        if (fichas.isEmpty()) return null;
-        return fichas.removeFirst();
-    }
-
     public int recuentoPuntosJugador() {//metodo cuando se necesitan sumar los ptos cuando se termina una ronda
         int suma = 0;
         for (FichaDomino f : fichas) {
@@ -134,6 +99,49 @@ public class Jugador implements Serializable {
 
     public void sumarPuntos(int puntos) {
         this.puntaje += puntos;
+    }
+
+    //interactivo
+    public boolean tieneJugadaValida(Tablero tablero) {
+        for (FichaDomino f : this.fichas) {
+            if (tablero.fichaValida(f)) return true;//tiene al menos una combinacion
+        }
+        return false;
+    }
+
+    // Verifica si puede jugar sin modificar el tablero
+    public ArrayList<FichaDomino> obtenerFichasJugables(Tablero tablero) {
+        ArrayList<FichaDomino> jugables = new ArrayList<>();
+        for (FichaDomino f : this.fichas) {
+            if (tablero.fichaValida(f)) {
+                jugables.add(f);
+            }
+        }
+        return jugables;
+    }
+
+    public boolean jugarFichaElegida(int indice, Tablero tablero){
+        if (indice >= 0 && indice < fichas.size()) {
+            FichaDomino ficha = fichas.get(indice);
+            boolean pudo = tablero.agregaFichaTablero(ficha);
+
+            if (pudo) {
+                fichas.remove(indice); // remueve la ficha jugada
+                return true;
+            }
+        }
+        return false;
+    }
+    public void agregarFicha(FichaDomino f){// agrega a su lista de fichas
+        fichas.add(f);
+    }
+    public int getIndiceFicha(FichaDomino ficha) {
+        for (int i = 0; i < fichas.size(); i++) {
+            if (fichas.get(i).equals(ficha)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     // Getters y setters
@@ -160,5 +168,4 @@ public class Jugador implements Serializable {
     public void setFichas(ArrayList<FichaDomino> fichas) {
         this.fichas = fichas;
     }
-
 }
